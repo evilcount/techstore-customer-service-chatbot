@@ -1,0 +1,17 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Environment variables / API keys
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Generated conversation files
+conversation_data/
+
+# OS files
+.DS_Store
+Thumbs.db
