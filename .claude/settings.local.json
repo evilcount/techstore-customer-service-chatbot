@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(C:\\\\Users\\\\evilc\\\\OneDrive\\\\Documents\\\\Cursos\\\\Pluralit\\\\devops-ml-serving-challenge\\\\techstore-chatbot\\\\.venv\\\\Scripts\\\\python.exe *)",
+      "PowerShell(& \"C:\\\\Users\\\\evilc\\\\OneDrive\\\\Documents\\\\Cursos\\\\Pluralit\\\\devops-ml-serving-challenge\\\\techstore-chatbot\\\\.venv\\\\Scripts\\\\python.exe\" -c \"import json; nb = json.load\\(open\\('C:/Users/evilc/OneDrive/Documents/Cursos/Pluralit/devops-ml-serving-challenge/techstore-chatbot/TechStorePlus_LangChain_LCEL_Chatbot.ipynb'\\)\\); print\\('Cells:', len\\(nb['cells']\\)\\); print\\('Types:', [c['cell_type'] for c in nb['cells']]\\)\")"
+    ]
+  }
+}
