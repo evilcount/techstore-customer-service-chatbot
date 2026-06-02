@@ -12,6 +12,10 @@ __pycache__/
 # Generated conversation files
 conversation_data/
 
+# Frontend build/dependencies
+frontend/.next/
+frontend/node_modules/
+
 # OS files
 .DS_Store
 Thumbs.db
