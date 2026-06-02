@@ -10,10 +10,15 @@ from backend.app.db.models import Base
 
 
 def normalize_database_url(database_url: str) -> str:
+    database_url = database_url.strip().strip('"').strip("'")
+    if not database_url:
+        return "sqlite:///./chat_demo.db"
     if database_url.startswith("postgres://"):
         return database_url.replace("postgres://", "postgresql+psycopg://", 1)
     if database_url.startswith("postgresql://"):
         return database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    if "://" not in database_url:
+        return "sqlite:///./chat_demo.db"
     return database_url
 
 
