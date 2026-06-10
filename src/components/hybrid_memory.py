@@ -22,7 +22,7 @@ passed to the model on every call. Module 3 introduces LangGraph's MemorySaver
 checkpointer, which automates this bookkeeping. Building it manually first makes
 the LangGraph abstraction much easier to understand.
 
-Stop 3 task: implement the TODO methods below.
+This module is part of the completed Week 3 memory layer.
 """
 
 from __future__ import annotations
@@ -89,11 +89,6 @@ class HybridMemory:
 
     def append_user(self, message: HumanMessage) -> None:
         """Add a user message to the buffer. Trigger summarisation if needed.
-
-        TODO:
-          1. Append `message` to self._buffer.
-          2. If len(self._buffer) > BUFFER_SIZE, call self._summarise_displaced()
-             to compress the oldest messages before the buffer grows unbounded.
         """
         self._buffer.append(message)
         if len(self._buffer) > BUFFER_SIZE:
@@ -104,10 +99,6 @@ class HybridMemory:
 
         Only the final AIMessage from the agent should be stored here —
         not intermediate tool-call messages. This keeps the memory lean.
-
-        TODO:
-          1. Append `message` to self._buffer.
-          2. If len(self._buffer) > BUFFER_SIZE, call self._summarise_displaced().
         """
         self._buffer.append(message)
         if len(self._buffer) > BUFFER_SIZE:
@@ -120,27 +111,6 @@ class HybridMemory:
           - TechStore Plus agent instructions
           - The running_summary (if non-empty)
           - The CustomerContext
-
-        TODO:
-          1. Build the system prompt string. Include:
-               - Agent role and behaviour instructions
-               - The running_summary block (only if self.running_summary is non-empty)
-               - self.context.to_context_string()
-          2. Prepend a SystemMessage with that string to a copy of self._buffer.
-          3. Call trim_messages() on the full list to enforce MAX_TOKENS.
-             Use token_counter="len" for simplicity (counts messages, not tokens).
-             Set strategy="last" so recent messages are kept when trimming.
-             Set include_system=True so the SystemMessage is never dropped.
-          4. Return the trimmed list.
-
-        Hint — trim_messages signature:
-            trim_messages(
-                messages,
-                max_tokens=MAX_TOKENS,
-                token_counter=len,
-                strategy="last",
-                include_system=True,
-            )
         """
         system_parts = [
             "You are TechStore Plus's memory-aware customer service agent.",
@@ -182,16 +152,6 @@ class HybridMemory:
         Called automatically when the buffer exceeds BUFFER_SIZE. Removes the
         oldest two messages (one user + one assistant pair) and sends them to
         the summariser LLM along with the current running_summary.
-
-        TODO:
-          1. Pop the two oldest messages from self._buffer (index 0 twice, or
-             use list slicing — your choice).
-          2. Build a prompt that asks the LLM to update the running summary.
-             Include self.running_summary (labelled "Existing summary:") and
-             the two displaced messages (labelled "New turns to incorporate:").
-             Ask for a concise factual summary in 2-3 sentences max.
-          3. Call self._summariser.invoke([HumanMessage(content=prompt)]) and
-             store the result as self.running_summary.
 
         Why keep this private?
           Callers (append_user / append_assistant) trigger it when needed.

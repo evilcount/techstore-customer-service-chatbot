@@ -5,10 +5,9 @@ Each function is decorated with @tool so the agent can discover and invoke it
 automatically. Tool docstrings serve as the description the LLM reads when
 deciding which tool to call — keep them clear and specific.
 
-Stop 3 task: implement the body of each function.
-- Import `db` from mock_db and call the appropriate helper method.
-- Return a human-readable string; the agent will read this as the tool result.
-- Handle missing data gracefully: return a clear message, never raise.
+Each tool reads from the mock TechStore database and returns a human-readable
+string. Missing data is handled gracefully so the agent can continue the
+conversation without surfacing internal errors.
 """
 
 from langchain_core.tools import tool

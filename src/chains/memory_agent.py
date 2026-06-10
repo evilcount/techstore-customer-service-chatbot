@@ -16,7 +16,7 @@ customers would cause the agent to confuse identities, leak personal data, and
 produce nonsensical responses. The `memories` dict keyed by email ensures strict
 isolation — the same design pattern used in multi-tenant production systems.
 
-Stop 3 task: implement the TODO sections below.
+This module is part of the completed Week 3 memory-and-tools agent.
 """
 
 from __future__ import annotations
@@ -74,16 +74,6 @@ class MemoryAgent:
 
         Returns:
             The agent's response as a plain string.
-
-        TODO:
-          1. Retrieve (or create) the HybridMemory for customer_email using
-             self._memory_for(customer_email).
-          2. Create a HumanMessage from user_text and append it to memory.
-          3. Call memory.build_messages() to get the token-trimmed message list.
-          4. Invoke self._agent with {"messages": <message_list>}.
-             The result is a dict; the final reply is result["messages"][-1].
-          5. Append the AIMessage reply to memory.
-          6. Return reply.content.
         """
         memory = self._memory_for(customer_email)
         memory.append_user(HumanMessage(content=user_text))
