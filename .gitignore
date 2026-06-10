@@ -21,3 +21,6 @@ frontend/node_modules/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Local isolated worktrees
+.worktrees/
