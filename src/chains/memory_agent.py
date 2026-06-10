@@ -31,6 +31,7 @@ from src.components.followup_detector import FollowUpTask, detect_followup_task
 from src.components.customer_tools import TOOLS
 from src.components.hybrid_memory import HybridMemory
 from src.integrations.notion_tasks import NotionConfigError, NotionTaskClient
+from src.rag.rag_chain import should_use_rag
 
 MODEL: str = "gpt-4.1-mini"
 
@@ -40,10 +41,19 @@ class TaskClient(Protocol):
         ...
 
 
+class RAGAssistant(Protocol):
+    def answer(self, question: str) -> str:
+        ...
+
+
 class MemoryAgent:
     """A memory-aware customer service agent backed by HybridMemory and six tools."""
 
-    def __init__(self, task_client: TaskClient | None = None) -> None:
+    def __init__(
+        self,
+        task_client: TaskClient | None = None,
+        rag_assistant: RAGAssistant | None = None,
+    ) -> None:
         self._llm = ChatOpenAI(model=MODEL, temperature=0)
         # create_react_agent builds a LangGraph ReAct loop:
         # model call → tool execution (if needed) → model call → final answer
@@ -51,6 +61,7 @@ class MemoryAgent:
         # One HybridMemory instance per customer email — never share between customers
         self._memories: dict[str, HybridMemory] = {}
         self._task_client = task_client
+        self._rag_assistant = rag_assistant
 
     # ── Public interface ──────────────────────────────────────────────────────
 
@@ -76,6 +87,11 @@ class MemoryAgent:
         """
         memory = self._memory_for(customer_email)
         memory.append_user(HumanMessage(content=user_text))
+
+        if self._rag_assistant is not None and should_use_rag(user_text):
+            reply_text = self._rag_assistant.answer(user_text)
+            memory.append_assistant(AIMessage(content=reply_text))
+            return reply_text
 
         result = self._agent.invoke({"messages": memory.build_messages()})
         reply = result["messages"][-1]
