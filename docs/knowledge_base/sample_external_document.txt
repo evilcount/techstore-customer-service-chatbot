@@ -1,0 +1,7 @@
+External Reference: Home Office Setup Checklist
+
+This sample external document is included to demonstrate TXT ingestion for the Week 4
+RAG challenge. A reliable home office setup should include a primary computer, a backup
+power plan, stable internet, secure Wi-Fi, an external display, and comfortable input
+devices. Users who attend many video calls should also consider a dedicated webcam,
+USB microphone, and noise-canceling headphones.

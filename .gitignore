@@ -24,3 +24,6 @@ Thumbs.db
 
 # Local isolated worktrees
 .worktrees/
+
+# Generated vector stores
+chroma_db/
