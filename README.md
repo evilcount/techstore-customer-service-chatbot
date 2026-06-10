@@ -176,6 +176,47 @@ Run cells top-to-bottom. LangSmith tracing is optional — the chain runs normal
 
 ---
 
+## Week 4 — RAG Fundamentals (`Week4_RAG_TechStore.ipynb`)
+
+Week 4 adds Retrieval-Augmented Generation to the TechStore Plus chatbot without
+replacing the previous weeks. The RAG pipeline loads TechStore knowledge-base documents,
+splits them into chunks, stores embeddings in ChromaDB, reloads the persisted vector
+store, and answers customer questions using retrieved context.
+
+### Architecture
+
+```text
+docs/knowledge_base/*
+  → src.rag.document_loader.load_documents()
+  → src.rag.text_splitter.split_documents()
+  → src.rag.vector_store.TechStoreVectorStore
+  → ChromaDB persisted under chroma_db/
+  → src.rag.rag_chain.TechStoreRAGAssistant
+  → grounded answer with source metadata
+```
+
+### Running
+
+```powershell
+pip install -r requirements.txt
+jupyter notebook Week4_RAG_TechStore.ipynb
+```
+
+Create a `.env` file with `OPENAI_API_KEY` before running embedding or answer cells.
+Generated ChromaDB files are local artifacts and are ignored by Git.
+
+### What Week 4 Adds
+
+| Capability | Description |
+|------------|-------------|
+| Document loading | Supports `.md`, `.txt`, and `.pdf` files |
+| Chunking | Uses recursive splitting with metadata preserved |
+| Vector database | Persists embeddings in local ChromaDB |
+| Grounded Q&A | Answers TechStore policy questions with retrieved context |
+| Chatbot integration | Routes policy, warranty, shipping, returns, product, and support questions to RAG |
+
+---
+
 ## Conversation Persistence
 
 Both weeks share the same output format:
