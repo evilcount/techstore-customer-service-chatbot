@@ -42,21 +42,30 @@ def should_use_rag(user_text: str) -> bool:
 
 
 class TechStoreRAGAssistant:
-    def __init__(self, *, retriever: Retriever, llm: LLM | None = None, k: int = 4) -> None:
+    def __init__(
+        self,
+        *,
+        retriever: Retriever,
+        llm: LLM | None = None,
+        k: int = 4,
+        system_prompt: str = "You are TechStore Plus support.",
+        not_found_message: str = "I could not find that answer in the TechStore knowledge base.",
+    ) -> None:
         self._retriever = retriever
         self._llm = llm or ChatOpenAI(model="gpt-4.1-mini", temperature=0)
         self._k = k
+        self._system_prompt = system_prompt
+        self._not_found_message = not_found_message
 
     def answer(self, question: str) -> str:
         documents = self._retriever.similarity_search(question, k=self._k)
         if not documents:
-            return "I could not find that answer in the TechStore knowledge base."
+            return self._not_found_message
 
         context = _format_context(documents)
         prompt = (
-            "You are TechStore Plus support. Answer the customer's question using only "
-            "the context below. If the context does not contain the answer, say you "
-            "could not find the answer in the TechStore knowledge base.\n\n"
+            f"{self._system_prompt} Answer the question using only the context below. "
+            f"If the context does not contain the answer, say: {self._not_found_message}\n\n"
             f"Context:\n{context}\n\n"
             f"Question: {question}"
         )

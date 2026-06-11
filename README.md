@@ -217,6 +217,41 @@ Generated ChromaDB files are local artifacts and are ignored by Git.
 
 ---
 
+## Week 4 Mini Project — Python Library RAG (`Week4_RAG_Python_Library.ipynb`)
+
+This mini project builds a RAG chatbot over the official Requests Python library
+documentation. It fetches selected Requests docs pages, stores local `.txt` copies,
+chunks the content, persists embeddings in a separate ChromaDB collection, answers
+technical questions, and computes retrieval metrics.
+
+### Running
+
+```powershell
+jupyter notebook Week4_RAG_Python_Library.ipynb
+```
+
+For a command-line chatbot:
+
+```powershell
+python scripts/requests_rag_chatbot.py --refresh --question "How do I set a timeout?"
+```
+
+The Requests docs are stored under:
+
+```text
+docs/python_library_docs/requests/
+```
+
+The vector store is generated locally under:
+
+```text
+chroma_db/requests_docs
+```
+
+The bonus evaluation includes macro Precision, Recall, F1 Score, and ROC curve points.
+
+---
+
 ## Conversation Persistence
 
 Both weeks share the same output format:

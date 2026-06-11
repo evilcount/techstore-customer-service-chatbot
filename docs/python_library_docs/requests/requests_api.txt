@@ -1,0 +1,1466 @@
+Title: Developer Interface
+Source URL: https://requests.readthedocs.io/en/latest/api/
+Library: requests
+
+Developer Interface ¶
+
+This part of the documentation covers all the interfaces of Requests. For
+parts where Requests depends on external libraries, we document the most
+important right here and provide links to the canonical documentation.
+
+Main Interface ¶
+
+All of Requests’ functionality can be accessed by these 7 methods.
+They all return an instance of the Response object.
+
+Response
+
+Constructs and sends a Request .
+
+Request
+
+method – method for the new Request object: GET , OPTIONS , HEAD , POST , PUT , PATCH , or DELETE .
+
+GET
+
+OPTIONS
+
+HEAD
+
+POST
+
+PUT
+
+PATCH
+
+DELETE
+
+url – URL for the new Request object.
+
+params – (optional) Dictionary, list of tuples or bytes to send
+in the query string for the Request .
+
+data – (optional) Dictionary, list of tuples, bytes, or file-like
+object to send in the body of the Request .
+
+json – (optional) A JSON serializable Python object to send in the body of the Request .
+
+headers – (optional) Dictionary of HTTP Headers to send with the Request .
+
+cookies – (optional) Dict or CookieJar object to send with the Request .
+
+files – (optional) Dictionary of 'name': file-like-objects (or {'name': file-tuple} ) for multipart encoding upload. file-tuple can be a 2-tuple ('filename', fileobj) , 3-tuple ('filename', fileobj, 'content_type') or a 4-tuple ('filename', fileobj, 'content_type', custom_headers) , where 'content_type' is a string
+defining the content type of the given file and custom_headers a dict-like object containing additional headers
+to add for the file.
+
+'name': file-like-objects
+
+{'name': file-tuple}
+
+file-tuple
+
+('filename', fileobj)
+
+('filename', fileobj, 'content_type')
+
+('filename', fileobj, 'content_type', custom_headers)
+
+'content_type'
+
+custom_headers
+
+auth – (optional) Auth tuple to enable Basic/Digest/Custom HTTP Auth.
+
+timeout ( float or tuple ) – (optional) How many seconds to wait for the server to send data
+before giving up, as a float, or a (connect timeout, read
+timeout) tuple.
+
+allow_redirects ( bool ) – (optional) Boolean. Enable/disable GET/OPTIONS/POST/PUT/PATCH/DELETE/HEAD redirection. Defaults to True .
+
+True
+
+proxies – (optional) Dictionary mapping protocol to the URL of the proxy.
+
+verify – (optional) Either a boolean, in which case it controls whether we verify
+the server’s TLS certificate, or a string, in which case it must be a path
+to a CA bundle to use. Defaults to True .
+
+stream – (optional) if False , the response content will be immediately downloaded.
+
+False
+
+cert – (optional) if String, path to ssl client cert file (.pem). If Tuple, (‘cert’, ‘key’) pair.
+
+Response object
+
+requests.Response
+
+Usage:
+
+>>> import requests >>> req = requests . request ( 'GET' , 'https://httpbin.org/get' ) >>> req <Response [200]>
+
+Sends a HEAD request.
+
+**kwargs – Optional arguments that request takes. If allow_redirects is not provided, it will be set to False (as
+opposed to the default request behavior).
+
+request
+
+Sends a GET request.
+
+**kwargs – Optional arguments that request takes.
+
+Sends a POST request.
+
+Sends a PUT request.
+
+Sends a PATCH request.
+
+Sends a DELETE request.
+
+Exceptions ¶
+
+There was an ambiguous exception that occurred while handling your
+request.
+
+A Connection error occurred.
+
+An HTTP error occurred.
+
+Too many redirects.
+
+The request timed out while trying to connect to the remote server.
+
+Requests that produced this error are safe to retry.
+
+The server did not send any data in the allotted amount of time.
+
+The request timed out.
+
+Catching this error will catch both ConnectTimeout and ReadTimeout errors.
+
+ConnectTimeout
+
+ReadTimeout
+
+Couldn’t decode the text into json
+
+Request Sessions ¶
+
+A Requests session.
+
+Provides cookie persistence, connection-pooling, and configuration.
+
+Basic Usage:
+
+>>> import requests >>> s = requests . Session () >>> s . get ( 'https://httpbin.org/get' ) <Response [200]>
+
+Or as a context manager:
+
+>>> with requests . Session () as s : ... s . get ( 'https://httpbin.org/get' ) <Response [200]>
+
+Default Authentication tuple or object to attach to Request .
+
+SSL client certificate default, if String, path to ssl client
+cert file (.pem). If Tuple, (‘cert’, ‘key’) pair.
+
+Closes all adapters and as such the session
+
+A CookieJar containing all currently outstanding cookies set on this
+session. By default it is a RequestsCookieJar , but
+may be any other cookielib.CookieJar compatible object.
+
+RequestsCookieJar
+
+cookielib.CookieJar
+
+Sends a DELETE request. Returns Response object.
+
+Sends a GET request. Returns Response object.
+
+Returns the appropriate connection adapter for the given URL.
+
+requests.adapters.BaseAdapter
+
+Receives a Response. Returns a redirect URI or None
+
+None
+
+Sends a HEAD request. Returns Response object.
+
+A case-insensitive dictionary of headers to be sent on each Request sent from this Session .
+
+Session
+
+Event-handling hooks.
+
+Maximum number of redirects allowed. If the request exceeds this
+limit, a TooManyRedirects exception is raised.
+This defaults to requests.models.DEFAULT_REDIRECT_LIMIT, which is
+30.
+
+TooManyRedirects
+
+Check the environment and merge it with some settings.
+
+dict
+
+Registers a connection adapter to a prefix.
+
+Adapters are sorted in descending order by prefix length.
+
+Sends a OPTIONS request. Returns Response object.
+
+Dictionary of querystring data to attach to each Request . The dictionary values may be lists for
+representing multivalued query parameters.
+
+Sends a PATCH request. Returns Response object.
+
+Sends a POST request. Returns Response object.
+
+json – (optional) json to send in the body of the Request .
+
+Constructs a PreparedRequest for
+transmission and returns it. The PreparedRequest has settings
+merged from the Request instance and those of the Session .
+
+PreparedRequest
+
+request – Request instance to prepare with this
+session’s settings.
+
+requests.PreparedRequest
+
+Dictionary mapping protocol or protocol and host to the URL of the proxy
+(e.g. {‘http’: ‘foo.bar:3128’, ‘http://host.name’: ‘foo.bar:4012’}) to
+be used on each Request .
+
+Sends a PUT request. Returns Response object.
+
+When being redirected we may want to strip authentication from the
+request to avoid leaking credentials. This method intelligently removes
+and reapplies authentication where possible to avoid credential loss.
+
+When being redirected we may want to change the method of the request
+based on certain specs or browser behavior.
+
+This method re-evaluates the proxy configuration by considering the
+environment variables. If we are redirected to a URL covered by
+NO_PROXY, we strip the proxy configuration. Otherwise, we set missing
+proxy keys for this URL (in case they were stripped by a previous
+redirect).
+
+This method also replaces the Proxy-Authorization header where
+necessary.
+
+Constructs a Request , prepares it and sends it.
+Returns Response object.
+
+method – method for the new Request object.
+
+params – (optional) Dictionary or bytes to be sent in the query
+string for the Request .
+
+files – (optional) Dictionary of 'filename': file-like-objects for multipart encoding upload.
+
+'filename': file-like-objects
+
+auth – (optional) Auth tuple or callable to enable
+Basic/Digest/Custom HTTP Auth.
+
+timeout ( float or tuple ) – (optional) How many seconds to wait for the server to send
+data before giving up, as a float, or a (connect timeout,
+read timeout) tuple.
+
+allow_redirects ( bool ) – (optional) Set to True by default.
+
+proxies – (optional) Dictionary mapping protocol or protocol and
+hostname to the URL of the proxy.
+
+hooks – (optional) Dictionary mapping hook name to one event or
+list of events, event must be callable.
+
+stream – (optional) whether to immediately download the response
+content. Defaults to False .
+
+verify – (optional) Either a boolean, in which case it controls whether we verify
+the server’s TLS certificate, or a string, in which case it must be a path
+to a CA bundle to use. Defaults to True . When set to False , requests will accept any TLS certificate presented by
+the server, and will ignore hostname mismatches and/or expired
+certificates, which will make your application vulnerable to
+man-in-the-middle (MitM) attacks. Setting verify to False may be useful during local development or testing.
+
+cert – (optional) if String, path to ssl client cert file (.pem).
+If Tuple, (‘cert’, ‘key’) pair.
+
+Receives a Response. Returns a generator of Responses or Requests.
+
+Send a given PreparedRequest.
+
+Decide whether Authorization header should be removed when redirecting
+
+Stream response content default.
+
+Trust environment settings for proxy configuration, default
+authentication and similar.
+
+SSL Verification default.
+Defaults to True , requiring requests to verify the TLS certificate at the
+remote end.
+If verify is set to False , requests will accept any TLS certificate
+presented by the server, and will ignore hostname mismatches and/or
+expired certificates, which will make your application vulnerable to
+man-in-the-middle (MitM) attacks.
+Only set this to False for testing.
+If verify is set to a string, it must be the path to a CA bundle file
+that will be used to verify the TLS certificate.
+
+Lower-Level Classes ¶
+
+A user-created Request object.
+
+Used to prepare a PreparedRequest , which is sent to the server.
+
+method – HTTP method to use.
+
+url – URL to send.
+
+headers – dictionary of headers to send.
+
+files – dictionary of {filename: fileobject} files to multipart upload.
+
+data – the body to attach to the request. If a dictionary or
+list of tuples [(key, value)] is provided, form-encoding will
+take place.
+
+[(key, value)]
+
+json – json for the body to attach to the request (if files or data is not specified).
+
+params – URL parameters to append to the URL. If a dictionary or
+list of tuples [(key, value)] is provided, form-encoding will
+take place.
+
+auth – Auth handler or (user, pass) tuple.
+
+cookies – dictionary or CookieJar of cookies to attach to this request.
+
+hooks – dictionary of callback hooks, for internal usage.
+
+>>> import requests >>> req = requests . Request ( 'GET' , 'https://httpbin.org/get' ) >>> req . prepare () <PreparedRequest [GET]>
+
+Deregister a previously registered hook.
+Returns True if the hook existed, False if not.
+
+Constructs a PreparedRequest for transmission and returns it.
+
+Properly register a hook.
+
+The Response object, which contains a
+server’s response to an HTTP request.
+
+The apparent encoding, provided by the charset_normalizer or chardet libraries.
+
+Releases the connection back to the pool. Once this method has been
+called the underlying raw object must not be accessed again.
+
+raw
+
+Note: Should not normally need to be called explicitly.
+
+Content of the response, in bytes.
+
+A CookieJar of Cookies the server sent back.
+
+The amount of time elapsed between sending the request
+and the arrival of the response (as a timedelta).
+This property specifically measures the time taken between sending
+the first byte of the request and finishing parsing the headers. It
+is therefore unaffected by consuming the response content or the
+value of the stream keyword argument.
+
+stream
+
+Encoding to decode with when accessing r.text.
+
+Case-insensitive Dictionary of Response Headers.
+For example, headers['content-encoding'] will return the
+value of a 'Content-Encoding' response header.
+
+headers['content-encoding']
+
+'Content-Encoding'
+
+A list of Response objects from
+the history of the Request. Any redirect responses will end
+up here. The list is sorted from the oldest to the most recent request.
+
+True if this Response is a well-formed HTTP redirect that could have
+been processed automatically (by Session.resolve_redirects ).
+
+Session.resolve_redirects
+
+Iterates over the response data.  When stream=True is set on the
+request, this avoids reading the content at once into memory for
+large responses.  The chunk size is the number of bytes it should
+read into memory.  This is not necessarily the length of each item
+returned as decoding can take place.
+
+chunk_size must be of type int or None. A value of None will
+function differently depending on the value of stream .
+stream=True will read data as it arrives in whatever size the
+chunks are received. If stream=False, data is returned as
+a single chunk.
+
+If decode_unicode is True, content will be decoded using encoding
+information from the response. If no encoding information is available,
+bytes will be returned. This can be bypassed by manually setting encoding on the response.
+
+Iterates over the response data, one line at a time.  When
+stream=True is set on the request, this avoids reading the
+content at once into memory for large responses.
+
+The decode_unicode param works the same as in iter_content , with the
+same caveats.
+
+Note
+
+This method is not reentrant safe.
+
+Decodes the JSON response body (if any) as a Python object.
+
+This may return a dictionary, list, etc. depending on what is in the response.
+
+**kwargs – Optional arguments that json.loads takes.
+
+json.loads
+
+requests.exceptions.JSONDecodeError – If the response body does not
+contain valid json.
+
+Returns the parsed header links of the response, if any.
+
+Returns a PreparedRequest for the next request in a redirect chain, if there is one.
+
+Returns True if status_code is less than 400, False if not.
+
+status_code
+
+This attribute checks if the status code of the response is between
+400 and 600 to see if there was a client error or a server error. If
+the status code is between 200 and 400, this will return True. This
+is not a check to see if the response code is 200 OK .
+
+200 OK
+
+Raises HTTPError , if one occurred.
+
+HTTPError
+
+File-like object representation of response (for advanced usage).
+Use of raw requires that stream=True be set on the request.
+This requirement does not apply for use internally to Requests.
+
+stream=True
+
+Textual reason of responded HTTP Status, e.g. “Not Found” or “OK”.
+
+The PreparedRequest object to which this
+is a response.
+
+Integer Code of responded HTTP Status, e.g. 404 or 200.
+
+Content of the response, in unicode.
+
+If Response.encoding is None, encoding will be guessed using charset_normalizer or chardet .
+
+charset_normalizer
+
+chardet
+
+The encoding of the response content is determined based solely on HTTP
+headers, following RFC 2616 to the letter. If you can take advantage of
+non-HTTP knowledge to make a better guess at the encoding, you should
+set r.encoding appropriately before accessing this property.
+
+r.encoding
+
+Final URL location of Response.
+
+Lower-Lower-Level Classes ¶
+
+The fully mutable PreparedRequest object,
+containing the exact bytes that will be sent to the server.
+
+Instances are generated from a Request object, and
+should not be instantiated manually; doing so may produce undesirable
+effects.
+
+>>> import requests >>> req = requests . Request ( 'GET' , 'https://httpbin.org/get' ) >>> r = req . prepare () >>> r <PreparedRequest [GET]> >>> s = requests . Session () >>> s . send ( r ) <Response [200]>
+
+request body to send to the server.
+
+dictionary of HTTP headers.
+
+dictionary of callback hooks, for internal usage.
+
+HTTP verb to send to the server.
+
+Build the path URL to use.
+
+Prepares the entire request with the given parameters.
+
+Prepares the given HTTP auth data.
+
+Prepares the given HTTP body data.
+
+Prepare Content-Length header based on request method and body
+
+Prepares the given HTTP cookie data.
+
+This function eventually generates a Cookie header from the
+given cookies using cookielib. Due to cookielib’s design, the header
+will not be regenerated if it already exists, meaning this function
+can only be called once for the life of the PreparedRequest object. Any subsequent calls
+to prepare_cookies will have no actual effect, unless the “Cookie”
+header is removed beforehand.
+
+Cookie
+
+prepare_cookies
+
+Prepares the given HTTP headers.
+
+Prepares the given hooks.
+
+Prepares the given HTTP method.
+
+Prepares the given HTTP URL.
+
+HTTP URL to send the request to.
+
+The Base Transport Adapter
+
+Cleans up adapter specific items.
+
+Sends PreparedRequest object. Returns Response object.
+
+request – The PreparedRequest being sent.
+
+stream – (optional) Whether to stream the request content.
+
+timeout ( float or tuple ) – (optional) How long to wait for the server to send
+data before giving up, as a float, or a (connect timeout,
+read timeout) tuple.
+
+verify – (optional) Either a boolean, in which case it controls whether we verify
+the server’s TLS certificate, or a string, in which case it must be a path
+to a CA bundle to use
+
+cert – (optional) Any user-provided SSL certificate to be trusted.
+
+proxies – (optional) The proxies dictionary to apply to the request.
+
+The built-in HTTP Adapter for urllib3.
+
+Provides a general-case interface for Requests sessions to contact HTTP and
+HTTPS urls by implementing the Transport Adapter interface. This class will
+usually be created by the Session class under the
+covers.
+
+pool_connections – The number of urllib3 connection pools to cache.
+
+pool_maxsize – The maximum number of connections to save in the pool.
+
+max_retries – The maximum number of retries each connection
+should attempt. Note, this applies only to failed DNS lookups, socket
+connections and connection timeouts, never to requests where data has
+made it to the server. By default, Requests does not retry failed
+connections. If you need granular control over the conditions under
+which we retry a request, import urllib3’s Retry class and pass
+that instead.
+
+Retry
+
+pool_block – Whether the connection pool should block for connections.
+
+>>> import requests >>> s = requests . Session () >>> a = requests . adapters . HTTPAdapter ( max_retries = 3 ) >>> s . mount ( 'http://' , a )
+
+Add any headers needed by the connection. As of v2.0 this does
+nothing by default, but is left for overriding by users that subclass
+the HTTPAdapter .
+
+HTTPAdapter
+
+This should not be called from user code, and is only exposed for use
+when subclassing the HTTPAdapter .
+
+request – The PreparedRequest to add headers to.
+
+kwargs – The keyword arguments from the call to send().
+
+Build the PoolKey attributes used by urllib3 to return a connection.
+
+This looks at the PreparedRequest, the user-specified verify value,
+and the value of the cert parameter to determine what PoolKey values
+to use to select a connection from a given urllib3 Connection Pool.
+
+The SSL related pool key arguments are not consistently set. As of
+this writing, use the following to determine what keys may be in that
+dictionary:
+
+If verify is True , "ssl_context" will be set and will be the
+default Requests SSL Context
+
+verify
+
+"ssl_context"
+
+If verify is False , "ssl_context" will not be set but "cert_reqs" will be set
+
+"cert_reqs"
+
+If verify is a string, (i.e., it is a user-specified trust bundle) "ca_certs" will be set if the string is not a directory recognized
+by os.path.isdir , otherwise "ca_cert_dir" will be
+set.
+
+"ca_certs"
+
+os.path.isdir
+
+"ca_cert_dir"
+
+If "cert" is specified, "cert_file" will always be set. If "cert" is a tuple with a second item, "key_file" will also
+be present
+
+"cert"
+
+"cert_file"
+
+"key_file"
+
+To override these settings, one may subclass this class, call this
+method and use the above logic to change parameters as desired. For
+example, if one wishes to use a custom ssl.SSLContext one
+must both set "ssl_context" and based on what else they require,
+alter the other keys to ensure the desired behaviour.
+
+ssl.SSLContext
+
+request ( PreparedRequest ) – The PreparedRequest being sent over the connection.
+
+verify – Either a boolean, in which case it controls whether
+we verify the server’s TLS certificate, or a string, in which case it
+must be a path to a CA bundle to use.
+
+cert – (optional) Any user-provided SSL certificate for client
+authentication (a.k.a., mTLS). This may be a string (i.e., just
+the path to a file which holds both certificate and key) or a
+tuple of length 2 with the certificate file path and key file
+path.
+
+A tuple of two dictionaries. The first is the “host parameters”
+portion of the Pool Key including scheme, hostname, and port. The
+second is a dictionary of SSLContext related parameters.
+
+Builds a Response object from a urllib3
+response. This should not be called from user code, and is only exposed
+for use when subclassing the HTTPAdapter
+
+req – The PreparedRequest used to generate the response.
+
+resp – The urllib3 response object.
+
+Verify a SSL certificate. This method should not be called from user
+code, and is only exposed for use when subclassing the HTTPAdapter .
+
+conn – The urllib3 connection object associated with the cert.
+
+url – The requested URL.
+
+verify – Either a boolean, in which case it controls whether we verify
+the server’s TLS certificate, or a string, in which case it must be a path
+to a CA bundle to use
+
+cert – The SSL certificate to verify.
+
+Disposes of any internal state.
+
+Currently, this closes the PoolManager and any active ProxyManager,
+which closes any pooled connections.
+
+DEPRECATED: Users should move to get_connection_with_tls_context for all subclasses of HTTPAdapter using Requests>=2.32.2.
+
+Returns a urllib3 connection for the given URL. This should not be
+called from user code, and is only exposed for use when subclassing the HTTPAdapter .
+
+url – The URL to connect to.
+
+proxies – (optional) A Requests-style dictionary of proxies used on this request.
+
+urllib3.HTTPConnectionPool
+
+Returns a urllib3 connection for the given request and TLS settings.
+This should not be called from user code, and is only exposed for use
+when subclassing the HTTPAdapter .
+
+request – The PreparedRequest object to be sent
+over the connection.
+
+verify – Either a boolean, in which case it controls whether we verify the
+server’s TLS certificate, or a string, in which case it must be a
+path to a CA bundle to use.
+
+cert – (optional) Any user-provided SSL certificate to be used for client
+authentication (a.k.a., mTLS).
+
+Initializes a urllib3 PoolManager.
+
+This method should not be called from user code, and is only
+exposed for use when subclassing the HTTPAdapter .
+
+connections – The number of urllib3 connection pools to cache.
+
+maxsize – The maximum number of connections to save in the pool.
+
+block – Block when no free connections are available.
+
+pool_kwargs – Extra keyword arguments used to initialize the Pool Manager.
+
+Returns a dictionary of the headers to add to any request sent
+through a proxy. This works with urllib3 magic to ensure that they are
+correctly sent to the proxy, rather than in a tunnelled request if
+CONNECT is being used.
+
+proxy – The url of the proxy being used for this request.
+
+Return urllib3 ProxyManager for the given proxy.
+
+proxy – The proxy to return a urllib3 ProxyManager for.
+
+proxy_kwargs – Extra keyword arguments used to configure the Proxy Manager.
+
+ProxyManager
+
+urllib3.ProxyManager
+
+Obtain the url to use when making the final request.
+
+If the message is being sent through a HTTP proxy, the full URL has to
+be used. Otherwise, we should only use the path portion of the URL.
+
+proxies – A dictionary of schemes or schemes and hosts to proxy URLs.
+
+str
+
+timeout ( float or tuple or urllib3 Timeout object ) – (optional) How long to wait for the server to send
+data before giving up, as a float, or a (connect timeout,
+read timeout) tuple.
+
+verify – (optional) Either a boolean, in which case it controls whether
+we verify the server’s TLS certificate, or a string, in which case it
+must be a path to a CA bundle to use
+
+Authentication ¶
+
+Base class that all auth implementations derive from
+
+Attaches HTTP Basic Authentication to the given Request object.
+
+Attaches HTTP Proxy Authentication to a given Request object.
+
+Attaches HTTP Digest Authentication to the given Request object.
+
+Encodings ¶
+
+Returns encodings from given content string.
+
+content – bytestring to extract encodings from.
+
+Returns encodings from given HTTP Header Dict.
+
+headers – dictionary to extract encoding from.
+
+Returns the requested content back in unicode.
+
+r – Response object to get unicode content from.
+
+Tried:
+
+charset from content-type
+
+fall back and replace all unicode characters
+
+Cookies ¶
+
+Returns a key/value dictionary from a CookieJar.
+
+cj – CookieJar object to extract cookies from.
+
+Returns a CookieJar from a key/value dictionary.
+
+cj – CookieJar to insert cookies into.
+
+cookie_dict – Dict of key/values to insert into CookieJar.
+
+CookieJar
+
+cookiejar – (optional) A cookiejar to add the cookies to.
+
+overwrite – (optional) If False, will not replace cookies
+already in the jar with new ones.
+
+Compatibility class; is a http.cookiejar.CookieJar, but exposes a dict
+interface.
+
+This is the CookieJar we create by default for requests and sessions that
+don’t specify one, since some clients may expect response.cookies and
+session.cookies to support dict operations.
+
+Requests does not use the dict interface internally; it’s just for
+compatibility with external client code. All requests code should work
+out of the box with externally provided instances of CookieJar , e.g. LWPCookieJar and FileCookieJar .
+
+LWPCookieJar
+
+FileCookieJar
+
+Unlike a regular CookieJar, this class is pickleable.
+
+Warning
+
+dictionary operations that are normally O(1) may be O(n).
+
+Add correct Cookie: header to request (urllib.request.Request object).
+
+The Cookie2 header is also added unless policy.hide_cookie2 is true.
+
+Clear some cookies.
+
+Invoking this method without arguments will clear all cookies.  If
+given a single argument, only cookies belonging to that domain will be
+removed.  If given two arguments, cookies belonging to the specified
+path within that domain are removed.  If given three arguments, then
+the cookie with the specified name, path and domain is removed.
+
+Raises KeyError if no matching cookie exists.
+
+Discard all expired cookies.
+
+You probably don’t need to call this method: expired cookies are never
+sent back to the server (provided you’re using DefaultCookiePolicy),
+this method is called by CookieJar itself every so often, and the
+.save() method won’t save expired cookies anyway (unless you ask
+otherwise by passing a true ignore_expires argument).
+
+Discard all session cookies.
+
+Note that the .save() method won’t save session cookies anyway, unless
+you ask otherwise by passing a true ignore_discard argument.
+
+Return a copy of this RequestsCookieJar.
+
+Extract cookies from response, where allowable given the request.
+
+Dict-like get() that also supports optional domain and path args in
+order to resolve naming collisions from using one cookie jar over
+multiple domains.
+
+operation is O(n), not O(1).
+
+Takes as an argument an optional domain and path and returns a plain
+old Python dict of name-value pairs of cookies that meet the
+requirements.
+
+Return the CookiePolicy instance used.
+
+Dict-like items() that returns a list of name-value tuples from the
+jar. Allows client-code to call dict(RequestsCookieJar) and get a
+vanilla python dict of key value pairs.
+
+dict(RequestsCookieJar)
+
+See also
+
+keys() and values().
+
+Dict-like iteritems() that returns an iterator of name-value tuples
+from the jar.
+
+iterkeys() and itervalues().
+
+Dict-like iterkeys() that returns an iterator of names of cookies
+from the jar.
+
+itervalues() and iteritems().
+
+Dict-like itervalues() that returns an iterator of values of cookies
+from the jar.
+
+iterkeys() and iteritems().
+
+Dict-like keys() that returns a list of names of cookies from the
+jar.
+
+values() and items().
+
+Utility method to list all the domains in the jar.
+
+Utility method to list all the paths in the jar.
+
+Return sequence of Cookie objects extracted from response object.
+
+Returns True if there are multiple domains in the jar.
+Returns False otherwise.
+
+bool
+
+If key is not found, d is returned if given, otherwise KeyError is raised.
+
+as a 2-tuple; but raise KeyError if D is empty.
+
+Dict-like set() that also supports optional domain and path args in
+order to resolve naming collisions from using one cookie jar over
+multiple domains.
+
+Set a cookie, without checking whether or not it should be set.
+
+Set a cookie if policy says it’s OK to do so.
+
+Updates this jar with cookies from another CookieJar or dict-like
+
+Dict-like values() that returns a list of values of cookies from the
+jar.
+
+keys() and items().
+
+There are two cookies that meet the criteria specified in the cookie jar.
+Use .get and .set and include domain and path args in order to be more specific.
+
+Exception.add_note(note) –
+add a note to the exception
+
+Exception.with_traceback(tb) –
+set self.__traceback__ to tb and return self.
+
+Status Code Lookup ¶
+
+alias of {}
+
+The codes object defines a mapping from common names for HTTP statuses
+to their numerical codes, accessible either as attributes or as dictionary
+items.
+
+codes
+
+Example:
+
+>>> import requests >>> requests . codes [ 'temporary_redirect' ] 307 >>> requests . codes . teapot 418 >>> requests . codes [ '\o/' ] 200
+
+Some codes have multiple names, and both upper- and lower-case versions of
+the names are allowed. For example, codes.ok , codes.OK , and codes.okay all correspond to the HTTP status code 200.
+
+codes.ok
+
+codes.OK
+
+codes.okay
+
+100: continue
+
+continue
+
+101: switching_protocols
+
+switching_protocols
+
+102: processing , early-hints
+
+processing
+
+early-hints
+
+103: checkpoint
+
+checkpoint
+
+122: uri_too_long , request_uri_too_long
+
+uri_too_long
+
+request_uri_too_long
+
+200: ok , okay , all_ok , all_okay , all_good , \o/ , ✓
+
+ok
+
+okay
+
+all_ok
+
+all_okay
+
+all_good
+
+\o/
+
+✓
+
+201: created
+
+created
+
+202: accepted
+
+accepted
+
+203: non_authoritative_info , non_authoritative_information
+
+non_authoritative_info
+
+non_authoritative_information
+
+204: no_content
+
+no_content
+
+205: reset_content , reset
+
+reset_content
+
+reset
+
+206: partial_content , partial
+
+partial_content
+
+partial
+
+207: multi_status , multiple_status , multi_stati , multiple_stati
+
+multi_status
+
+multiple_status
+
+multi_stati
+
+multiple_stati
+
+208: already_reported
+
+already_reported
+
+226: im_used
+
+im_used
+
+300: multiple_choices
+
+multiple_choices
+
+301: moved_permanently , moved , \o-
+
+moved_permanently
+
+moved
+
+\o-
+
+302: found
+
+found
+
+303: see_other , other
+
+see_other
+
+other
+
+304: not_modified
+
+not_modified
+
+305: use_proxy
+
+use_proxy
+
+306: switch_proxy
+
+switch_proxy
+
+307: temporary_redirect , temporary_moved , temporary
+
+temporary_redirect
+
+temporary_moved
+
+temporary
+
+308: permanent_redirect , resume_incomplete , resume
+
+permanent_redirect
+
+resume_incomplete
+
+resume
+
+400: bad_request , bad
+
+bad_request
+
+bad
+
+401: unauthorized
+
+unauthorized
+
+402: payment_required , payment
+
+payment_required
+
+payment
+
+403: forbidden
+
+forbidden
+
+404: not_found , -o-
+
+not_found
+
+-o-
+
+405: method_not_allowed , not_allowed
+
+method_not_allowed
+
+not_allowed
+
+406: not_acceptable
+
+not_acceptable
+
+407: proxy_authentication_required , proxy_auth , proxy_authentication
+
+proxy_authentication_required
+
+proxy_auth
+
+proxy_authentication
+
+408: request_timeout , timeout
+
+request_timeout
+
+timeout
+
+409: conflict
+
+conflict
+
+410: gone
+
+gone
+
+411: length_required
+
+length_required
+
+412: precondition_failed , precondition
+
+precondition_failed
+
+precondition
+
+413: request_entity_too_large , content_too_large
+
+request_entity_too_large
+
+content_too_large
+
+414: request_uri_too_large , uri_too_long
+
+request_uri_too_large
+
+415: unsupported_media_type , unsupported_media , media_type
+
+unsupported_media_type
+
+unsupported_media
+
+media_type
+
+416: requested_range_not_satisfiable , requested_range , range_not_satisfiable
+
+requested_range_not_satisfiable
+
+requested_range
+
+range_not_satisfiable
+
+417: expectation_failed
+
+expectation_failed
+
+418: im_a_teapot , teapot , i_am_a_teapot
+
+im_a_teapot
+
+teapot
+
+i_am_a_teapot
+
+421: misdirected_request
+
+misdirected_request
+
+422: unprocessable_entity , unprocessable , unprocessable_content
+
+unprocessable_entity
+
+unprocessable
+
+unprocessable_content
+
+423: locked
+
+locked
+
+424: failed_dependency , dependency
+
+failed_dependency
+
+dependency
+
+425: unordered_collection , unordered , too_early
+
+unordered_collection
+
+unordered
+
+too_early
+
+426: upgrade_required , upgrade
+
+upgrade_required
+
+upgrade
+
+428: precondition_required , precondition
+
+precondition_required
+
+429: too_many_requests , too_many
+
+too_many_requests
+
+too_many
+
+431: header_fields_too_large , fields_too_large
+
+header_fields_too_large
+
+fields_too_large
+
+444: no_response , none
+
+no_response
+
+none
+
+449: retry_with , retry
+
+retry_with
+
+retry
+
+450: blocked_by_windows_parental_controls , parental_controls
+
+blocked_by_windows_parental_controls
+
+parental_controls
+
+451: unavailable_for_legal_reasons , legal_reasons
+
+unavailable_for_legal_reasons
+
+legal_reasons
+
+499: client_closed_request
+
+client_closed_request
+
+500: internal_server_error , server_error , /o\ , ✗
+
+internal_server_error
+
+server_error
+
+/o\
+
+✗
+
+501: not_implemented
+
+not_implemented
+
+502: bad_gateway
+
+bad_gateway
+
+503: service_unavailable , unavailable
+
+service_unavailable
+
+unavailable
+
+504: gateway_timeout
+
+gateway_timeout
+
+505: http_version_not_supported , http_version
+
+http_version_not_supported
+
+http_version
+
+506: variant_also_negotiates
+
+variant_also_negotiates
+
+507: insufficient_storage
+
+insufficient_storage
+
+509: bandwidth_limit_exceeded , bandwidth
+
+bandwidth_limit_exceeded
+
+bandwidth
+
+510: not_extended
+
+not_extended
+
+511: network_authentication_required , network_auth , network_authentication
+
+network_authentication_required
+
+network_auth
+
+network_authentication
+
+Migrating to 1.x ¶
+
+This section details the main differences between 0.x and 1.x and is meant
+to ease the pain of upgrading.
+
+API Changes ¶
+
+Response.json is now a callable and not a property of a response. import requests r = requests . get ( 'https://api.github.com/events' ) r . json () # This *call* raises an exception if JSON decoding fails
+
+Response.json is now a callable and not a property of a response.
+
+Response.json
+
+import requests r = requests . get ( 'https://api.github.com/events' ) r . json () # This *call* raises an exception if JSON decoding fails
+
+The Session API has changed. Sessions objects no longer take parameters. Session is also now capitalized, but it can still be
+instantiated with a lowercase session for backwards compatibility. s = requests . Session () # formerly, session took parameters s . auth = auth s . headers . update ( headers ) r = s . get ( 'https://httpbin.org/headers' )
+
+The Session API has changed. Sessions objects no longer take parameters. Session is also now capitalized, but it can still be
+instantiated with a lowercase session for backwards compatibility.
+
+session
+
+s = requests . Session () # formerly, session took parameters s . auth = auth s . headers . update ( headers ) r = s . get ( 'https://httpbin.org/headers' )
+
+All request hooks have been removed except ‘response’.
+
+Authentication helpers have been broken out into separate modules. See requests-oauthlib and requests-kerberos .
+
+The parameter for streaming requests was changed from prefetch to stream and the logic was inverted. In addition, stream is now
+required for raw response reading. # in 0.x, passing prefetch=False would accomplish the same thing r = requests . get ( 'https://api.github.com/events' , stream = True ) for chunk in r . iter_content ( 8192 ): ...
+
+The parameter for streaming requests was changed from prefetch to stream and the logic was inverted. In addition, stream is now
+required for raw response reading.
+
+prefetch
+
+# in 0.x, passing prefetch=False would accomplish the same thing r = requests . get ( 'https://api.github.com/events' , stream = True ) for chunk in r . iter_content ( 8192 ): ...
+
+The config parameter to the requests method has been removed. Some of
+these options are now configured on a Session such as keep-alive and
+maximum number of redirects. The verbosity option should be handled by
+configuring logging. import requests import logging # Enabling debugging at http.client level (requests->urllib3->http.client) # you will see the REQUEST, including HEADERS and DATA, and RESPONSE with HEADERS but without DATA. # the only thing missing will be the response.body which is not logged. try : # for Python 3 from http.client import HTTPConnection except ImportError : from httplib import HTTPConnection HTTPConnection . debuglevel = 1 logging . basicConfig () # you need to initialize logging, otherwise you will not see anything from requests logging . getLogger () . setLevel ( logging . DEBUG ) requests_log = logging . getLogger ( "urllib3" ) requests_log . setLevel ( logging . DEBUG ) requests_log . propagate = True requests . get ( 'https://httpbin.org/headers' )
+
+The config parameter to the requests method has been removed. Some of
+these options are now configured on a Session such as keep-alive and
+maximum number of redirects. The verbosity option should be handled by
+configuring logging.
+
+config
+
+import requests import logging # Enabling debugging at http.client level (requests->urllib3->http.client) # you will see the REQUEST, including HEADERS and DATA, and RESPONSE with HEADERS but without DATA. # the only thing missing will be the response.body which is not logged. try : # for Python 3 from http.client import HTTPConnection except ImportError : from httplib import HTTPConnection HTTPConnection . debuglevel = 1 logging . basicConfig () # you need to initialize logging, otherwise you will not see anything from requests logging . getLogger () . setLevel ( logging . DEBUG ) requests_log = logging . getLogger ( "urllib3" ) requests_log . setLevel ( logging . DEBUG ) requests_log . propagate = True requests . get ( 'https://httpbin.org/headers' )
+
+Licensing ¶
+
+One key difference that has nothing to do with the API is a change in the
+license from the ISC license to the Apache 2.0 license. The Apache 2.0
+license ensures that contributions to Requests are also covered by the Apache
+2.0 license.
+
+Migrating to 2.x ¶
+
+Compared with the 1.0 release, there were relatively few backwards
+incompatible changes, but there are still a few issues to be aware of with
+this major release.
+
+For more details on the changes in this release including new APIs, links
+to the relevant GitHub issues and some of the bug fixes, read Cory’s blog on the subject.
+
+There were a couple changes to how Requests handles exceptions. RequestException is now a subclass of IOError rather than RuntimeError as that more accurately categorizes the type of error.
+In addition, an invalid URL escape sequence now raises a subclass of RequestException rather than a ValueError . requests . get ( 'http://%zz/' ) # raises requests.exceptions.InvalidURL Lastly, httplib.IncompleteRead exceptions caused by incorrect chunked
+encoding will now raise a Requests ChunkedEncodingError instead.
+
+There were a couple changes to how Requests handles exceptions. RequestException is now a subclass of IOError rather than RuntimeError as that more accurately categorizes the type of error.
+In addition, an invalid URL escape sequence now raises a subclass of RequestException rather than a ValueError .
+
+RequestException
+
+IOError
+
+RuntimeError
+
+ValueError
+
+requests . get ( 'http://%zz/' ) # raises requests.exceptions.InvalidURL
+
+Lastly, httplib.IncompleteRead exceptions caused by incorrect chunked
+encoding will now raise a Requests ChunkedEncodingError instead.
+
+httplib.IncompleteRead
+
+ChunkedEncodingError
+
+The proxy API has changed slightly. The scheme for a proxy URL is now
+required. proxies = { "http" : "10.10.1.10:3128" , # use http://10.10.1.10:3128 instead } # In requests 1.x, this was legal, in requests 2.x, #  this raises requests.exceptions.MissingSchema requests . get ( "http://example.org" , proxies = proxies )
+
+The proxy API has changed slightly. The scheme for a proxy URL is now
+required.
+
+proxies = { "http" : "10.10.1.10:3128" , # use http://10.10.1.10:3128 instead } # In requests 1.x, this was legal, in requests 2.x, #  this raises requests.exceptions.MissingSchema requests . get ( "http://example.org" , proxies = proxies )
+
+Behavioural Changes ¶
+
+Keys in the headers dictionary are now native strings on all Python
+versions, i.e. bytestrings on Python 2 and unicode on Python 3. If the
+keys are not native strings (unicode on Python 2 or bytestrings on Python 3)
+they will be converted to the native string type assuming UTF-8 encoding.
+
+headers
+
+Values in the headers dictionary should always be strings. This has
+been the project’s position since before 1.0 but a recent change
+(since version 2.11.0) enforces this more strictly. It’s advised to avoid
+passing header values as unicode when possible.

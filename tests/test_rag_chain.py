@@ -63,3 +63,25 @@ def test_rag_assistant_returns_not_found_when_no_documents():
     answer = assistant.answer("Do you repair espresso machines?")
 
     assert answer == "I could not find that answer in the TechStore knowledge base."
+
+
+def test_rag_assistant_accepts_custom_system_prompt():
+    retriever = FakeRetriever(
+        [
+            Document(
+                page_content="Use the timeout parameter to avoid hanging forever.",
+                metadata={"title": "requests_quickstart.txt"},
+            )
+        ]
+    )
+    llm = FakeLLM("Use timeout=5.")
+    assistant = TechStoreRAGAssistant(
+        retriever=retriever,
+        llm=llm,
+        system_prompt="You are a Requests documentation assistant.",
+        not_found_message="I could not find that answer in the Requests documentation.",
+    )
+
+    assistant.answer("How do I set a timeout?")
+
+    assert "Requests documentation assistant" in llm.prompts[0][0].content
