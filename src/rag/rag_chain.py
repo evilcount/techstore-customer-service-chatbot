@@ -7,25 +7,6 @@ from langchain_core.messages import HumanMessage
 from langchain_openai import ChatOpenAI
 
 
-RAG_KEYWORDS = {
-    "policy",
-    "policies",
-    "return",
-    "returns",
-    "refund",
-    "exchange",
-    "warranty",
-    "shipping",
-    "delivery",
-    "damaged",
-    "package",
-    "product",
-    "products",
-    "support",
-    "priority",
-}
-
-
 class Retriever(Protocol):
     def similarity_search(self, query: str, *, k: int = 4) -> list[Document]:
         ...
@@ -34,11 +15,6 @@ class Retriever(Protocol):
 class LLM(Protocol):
     def invoke(self, messages: list[HumanMessage]):
         ...
-
-
-def should_use_rag(user_text: str) -> bool:
-    normalized = user_text.lower()
-    return any(keyword in normalized for keyword in RAG_KEYWORDS)
 
 
 class TechStoreRAGAssistant:
@@ -52,7 +28,7 @@ class TechStoreRAGAssistant:
         not_found_message: str = "I could not find that answer in the TechStore knowledge base.",
     ) -> None:
         self._retriever = retriever
-        self._llm = llm or ChatOpenAI(model="gpt-4.1-mini", temperature=0)
+        self._llm = llm or ChatOpenAI(model="gpt-4o-mini", temperature=0)
         self._k = k
         self._system_prompt = system_prompt
         self._not_found_message = not_found_message
