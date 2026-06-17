@@ -29,48 +29,42 @@ capstone brief provides reference implementations in Stop 2, Component 4.
 
 | Pipeline | Precision@3 | Precision@6 | MRR |
 |---|---|---|---|
-| Baseline (similarity, k=4) | 0.63 | 0.58 | 0.71 |
-| Optimized (MMR k=6 + re-rank top-3) | 0.80 | 0.75 | 0.89 |
+| Baseline (similarity, k=4) | 0.33 | 0.20 | 0.93 |
+| Optimized (MMR k=6, lambda=0.85 + re-rank top-3) | 0.37 | 0.18 | 1.00 |
 
 ## Analysis
 
 ### Precision@k observations
 
-MMR improved Precision@6 most visibly on queries 2 and 10, which have two relevant
-source files each. The baseline similarity retriever returned 4 chunks from the
-same file for query 2 (`product_manual_router_nx300.txt`), missing the complementary
-`support_router_wont_connect.txt` document entirely. MMR's diversity penalty forced
-the retriever to surface both documents, raising Precision@6 by ~0.17 on those
-queries.
+Precision@3 improved slightly after optimization because MMR surfaced a more
+diverse candidate set and the cross-encoder promoted the best passages into the
+top-3 context window. Precision@6 is lower for the optimized pipeline because the
+final retriever intentionally returns only the re-ranked top-3 chunks to the LLM;
+the metric still uses a fixed denominator of 6, so missing ranks 4-6 count against
+the score.
 
-Cross-encoder re-ranking boosted Precision@3 on query 9 (restocking fee), where
-the similarity retriever ranked a general returns overview chunk ahead of the
-specific CONDITION REQUIREMENTS section that explicitly mentions the 10% fee.
-The cross-encoder correctly promoted the more relevant chunk to rank 1.
+Cross-encoder re-ranking boosted source-level relevance on query 3 (Premium
+Protection Plan coverage), where the baseline did not rank the current warranty
+policy first. The optimized pipeline placed `policy_warranty_terms.txt` at rank 1.
 
-No queries performed worse after optimization. The only trade-off observed was
-a minor latency increase (~200 ms per query for cross-encoder inference) on
-queries with large candidate chunks.
+The trade-off is latency from cross-encoder inference and a lower Precision@6
+when evaluating a top-3 compressed context with a six-slot denominator.
 
 ### MRR observations
 
-Re-ranking significantly boosted MRR on queries 7 and 10. For query 7 (accidental
-damage), the relevant warranty chunk scored low on cosine similarity (the phrase
-"accidental damage" appears only once in `policy_warranty_terms.txt`) but the
-cross-encoder correctly identified it as the most relevant passage for that
-specific question. MRR improved from 0.50 to 1.0 on that query.
+Re-ranking significantly boosted MRR on query 3. For "What does the Premium
+Protection Plan cover?", the baseline similarity retriever placed support and
+service documents above the current warranty policy. MMR plus cross-encoder
+re-ranking promoted `policy_warranty_terms.txt` to rank 1.
 
-The baseline MRR of 0.71 indicates that the first relevant document was typically
-found within the top-2 results, meaning the baseline is already reasonable for
-single-document queries. The gain from MMR + re-ranking is largest on multi-source
-queries where diversity is critical.
+The baseline MRR of 0.93 indicates that the first relevant document was already
+ranked first for most queries. The optimized pipeline raises MRR to 1.00, meaning
+the first returned chunk source is relevant for every evaluation query.
 
 ## Conclusion
 
-The optimized pipeline (MMR k=6 + cross-encoder re-ranking top-3) exceeds the
-baseline on all three metrics: Precision@3 (+0.17), Precision@6 (+0.17), and
-MRR (+0.18). The Stop 2 requirement — "the optimized pipeline must match or
-exceed the baseline on MRR" — is satisfied with a substantial improvement. The
-cross-encoder's ability to model fine-grained query-document interactions is
-the primary driver of improvement, particularly for queries where the relevant
-chunk uses different vocabulary than the question.
+The optimized pipeline (MMR k=6, lambda=0.85 + cross-encoder re-ranking top-3)
+improves Precision@3 (+0.04) and MRR (+0.07) while lowering Precision@6 (-0.02)
+because the final context is compressed to three chunks. The Stop 2 requirement
+— "the optimized pipeline must match or exceed the baseline on MRR" — is
+satisfied: optimized MRR is 1.00 versus the baseline MRR of 0.93.

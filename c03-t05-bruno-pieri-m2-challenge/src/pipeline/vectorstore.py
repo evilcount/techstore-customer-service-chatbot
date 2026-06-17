@@ -58,6 +58,14 @@ A larger fetch_k gives more diversity options but increases latency linearly.
 20 is a practical default for corpora under 10,000 chunks.
 """
 
+MMR_LAMBDA_MULT: float = 0.85
+"""Balance relevance against diversity for MMR retrieval.
+
+Values closer to 1.0 favor query relevance; values closer to 0.0 favor
+diversity. 0.85 keeps redundant chunks lower than similarity search while
+preserving source-level MRR on the Stop 2 evaluation set.
+"""
+
 
 def _get_embeddings() -> OpenAIEmbeddings:
     """Return the shared OpenAI embeddings model.
@@ -157,8 +165,9 @@ def get_mmr_retriever(vectorstore: Chroma) -> BaseRetriever:
         MMR selects the first document by pure similarity, then each subsequent
         document by the trade-off:
             ``lambda * sim(d, q) - (1 - lambda) * max_sim(d, selected)``
-        With the default lambda=0.5, relevance and diversity are weighted equally.
-        With fetch_k=20 >> k=6, MMR has enough candidates to find diverse results.
+        With lambda_mult=0.85, relevance is weighted more heavily than diversity
+        while still reducing duplicate chunks. With fetch_k=20 >> k=6, MMR has
+        enough candidates to find diverse results.
 
     Args:
         vectorstore: An initialised :class:`~langchain_chroma.Chroma` instance.
@@ -174,5 +183,9 @@ def get_mmr_retriever(vectorstore: Chroma) -> BaseRetriever:
     """
     return vectorstore.as_retriever(
         search_type="mmr",
-        search_kwargs={"k": MMR_K, "fetch_k": MMR_FETCH_K},
+        search_kwargs={
+            "k": MMR_K,
+            "fetch_k": MMR_FETCH_K,
+            "lambda_mult": MMR_LAMBDA_MULT,
+        },
     )

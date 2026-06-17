@@ -141,8 +141,8 @@ def evaluate_retriever(
         docs = retriever_fn(query)
         sources = [doc.metadata.get("source", "") for doc in docs]
 
-        p3 = precision_at_k(sources, relevant, k=3) if len(sources) >= 3 else precision_at_k(sources, relevant, k=len(sources))
-        p6 = precision_at_k(sources, relevant, k=6) if len(sources) >= 6 else precision_at_k(sources, relevant, k=len(sources))
+        p3 = precision_at_k(sources, relevant, k=3)
+        p6 = precision_at_k(sources, relevant, k=6)
         mrr_score = mrr(sources, relevant)
 
         query_results.append(QueryResult(

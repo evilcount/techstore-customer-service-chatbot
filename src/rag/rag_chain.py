@@ -7,6 +7,26 @@ from langchain_core.messages import HumanMessage
 from langchain_openai import ChatOpenAI
 
 
+RAG_KEYWORDS = {
+    "return",
+    "returns",
+    "refund",
+    "exchange",
+    "warranty",
+    "shipping",
+    "delivery",
+    "product",
+    "products",
+    "policy",
+    "policies",
+    "troubleshoot",
+    "troubleshooting",
+    "repair",
+    "manual",
+    "support",
+}
+
+
 class Retriever(Protocol):
     def similarity_search(self, query: str, *, k: int = 4) -> list[Document]:
         ...
@@ -49,6 +69,12 @@ class TechStoreRAGAssistant:
         answer_text = str(response.content).strip()
         sources = _format_sources(documents)
         return f"{answer_text}\n\nSources: {sources}"
+
+
+def should_use_rag(user_text: str) -> bool:
+    """Return True when a customer question should consult the knowledge base."""
+    normalized = user_text.lower()
+    return any(keyword in normalized for keyword in RAG_KEYWORDS)
 
 
 def _format_context(documents: list[Document]) -> str:
