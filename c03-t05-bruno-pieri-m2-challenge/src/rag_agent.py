@@ -119,7 +119,14 @@ class GuardrailedAnswer:
     cited_sources: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
-        valid_decisions = {"answer", "answer_with_disclaimer", "extractive", "no_answer"}
+        valid_decisions = {
+            "answer",
+            "answer_with_disclaimer",
+            "extractive",
+            "ask_clarify",
+            "no_answer",
+            "refuse",
+        }
         if self.decision not in valid_decisions:
             raise ValueError(
                 f"decision must be one of {valid_decisions}, got {self.decision!r}"
