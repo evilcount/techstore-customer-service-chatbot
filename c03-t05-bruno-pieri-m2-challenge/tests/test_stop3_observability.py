@@ -25,3 +25,12 @@ def test_log_query_includes_guardrail_metrics(caplog):
     assert "citation_density" in message
     assert "numeric_grounding_rate" in message
     assert "[TB:laptop_specs.csv:row0]" in message
+
+def test_optional_route_failure_is_logged(caplog):
+    agent = TechStoreRAGAgent()
+
+    with caplog.at_level(logging.WARNING, logger="src.rag_agent"):
+        agent._log_optional_route_failure("table", RuntimeError("table unavailable"))
+
+    assert "Table retrieval failed: table unavailable" in caplog.text
+

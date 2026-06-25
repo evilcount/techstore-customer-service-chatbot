@@ -410,8 +410,8 @@ class TechStoreRAGAgent:
                         ))
                     if snippets:
                         routing_paths.append("graph")
-                except Exception:
-                    pass
+                except Exception as exc:
+                    self._log_optional_route_failure("graph", exc)
 
         # ------------------------------------------------------------------
         # Step 4: Table retrieval — numeric / comparison queries
@@ -426,8 +426,8 @@ class TechStoreRAGAgent:
                 context_docs.extend(table_docs)
                 if table_docs:
                     routing_paths.append("table")
-            except Exception:
-                pass
+            except Exception as exc:
+                self._log_optional_route_failure("table", exc)
 
         # ------------------------------------------------------------------
         # Step 4.5: Image retrieval — visual / diagram queries
@@ -441,8 +441,8 @@ class TechStoreRAGAgent:
                 context_docs.extend(image_docs)
                 if image_docs:
                     routing_paths.append("image")
-            except Exception:
-                pass
+            except Exception as exc:
+                self._log_optional_route_failure("image", exc)
 
         # ------------------------------------------------------------------
         # Step 5: No evidence at all → immediate no_answer
@@ -470,6 +470,9 @@ class TechStoreRAGAgent:
         self._log_query(question, routing_paths, len(context_docs), result)
         return result
 
+    def _log_optional_route_failure(self, route: str, exc: Exception) -> None:
+        """Log optional retrieval failures without failing the whole answer."""
+        logger.warning("%s retrieval failed: %s", route.capitalize(), exc)
     def _log_query(
         self,
         question: str,
