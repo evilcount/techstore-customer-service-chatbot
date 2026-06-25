@@ -57,9 +57,12 @@ Forward reference to M3 (LangGraph):
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -146,6 +149,13 @@ _ENTITY_KEYWORDS: frozenset[str] = frozenset({
     "warranty tier", "warranty terms",
 })
 
+# Signals that an image/visual asset is requested
+_IMAGE_KEYWORDS: frozenset[str] = frozenset({
+    "image", "photo", "photograph", "picture", "figure", "diagram",
+    "show me", "illustration", "slide", "visual", "screenshot",
+    "what does", "what do", "looks like", "look like",
+})
+
 # Signals that a numeric / CSV lookup is needed
 _TABLE_KEYWORDS: frozenset[str] = frozenset({
     "most storage", "most ram", "most memory",
@@ -209,6 +219,7 @@ class TechStoreRAGAgent:
         self._vectorstore = None
         self._kg = None
         self._table_retriever = None
+        self._image_retriever = None
 
     def _ensure_initialized(self) -> None:
         """Lazy-initialise all components on first call to answer().
@@ -222,6 +233,7 @@ class TechStoreRAGAgent:
         from src.pipeline.vectorstore import build_vectorstore, load_vectorstore
         from src.graph.knowledge_graph import TechStoreKnowledgeGraph
         from src.multimodal.table_retriever import TableRetriever
+        from src.multimodal.image_retriever import ImageRetriever
 
         if self._vectorstore is None:
             chroma_path = Path("./chroma_db")
@@ -240,6 +252,13 @@ class TechStoreRAGAgent:
         if self._table_retriever is None:
             self._table_retriever = TableRetriever()
             self._table_retriever.load_tables()
+
+        if self._image_retriever is None:
+            self._image_retriever = ImageRetriever()
+            try:
+                self._image_retriever.load_images()
+            except FileNotFoundError:
+                self._image_retriever = None
 
     def _is_entity_dense(self, question: str) -> bool:
         """Return True if *question* contains entity-dense signals.
@@ -260,6 +279,22 @@ class TechStoreRAGAgent:
         """
         q_lower = question.lower()
         return any(kw in q_lower for kw in _ENTITY_KEYWORDS)
+
+    def _is_image_query(self, question: str) -> bool:
+        """Return True if *question* requests a visual asset or diagram.
+
+        Detects keywords like "image", "diagram", "figure", "show me", "looks like"
+        that signal the user wants a visual reference rather than (or in addition to)
+        a text answer.
+
+        Args:
+            question: The user's question string.
+
+        Returns:
+            True if the question likely benefits from image retrieval.
+        """
+        q_lower = question.lower()
+        return any(kw in q_lower for kw in _IMAGE_KEYWORDS)
 
     def _is_table_query(self, question: str) -> bool:
         """Return True if *question* targets numeric or table data.
@@ -330,6 +365,8 @@ class TechStoreRAGAgent:
 
         self._ensure_initialized()
 
+        routing_paths: list[str] = []
+
         # ------------------------------------------------------------------
         # Step 1+2: MMR retrieval + cross-encoder re-ranking
         # ------------------------------------------------------------------
@@ -339,6 +376,7 @@ class TechStoreRAGAgent:
         context_docs: list[Document] = []
         if mmr_docs:
             context_docs = rerank(question, mmr_docs)
+            routing_paths.append("vector")
 
         # ------------------------------------------------------------------
         # Step 3: Graph RAG — entity-dense queries
@@ -363,6 +401,8 @@ class TechStoreRAGAgent:
                             page_content=content,
                             metadata={"source": citation},
                         ))
+                    if snippets:
+                        routing_paths.append("graph")
                 except Exception:
                     pass
 
@@ -377,6 +417,23 @@ class TechStoreRAGAgent:
                     citation = doc.metadata.get("table_citation", "")
                     doc.metadata["source"] = citation
                 context_docs.extend(table_docs)
+                if table_docs:
+                    routing_paths.append("table")
+            except Exception:
+                pass
+
+        # ------------------------------------------------------------------
+        # Step 4.5: Image retrieval — visual / diagram queries
+        # ------------------------------------------------------------------
+        if self._is_image_query(question) and self._image_retriever is not None:
+            try:
+                image_docs = self._image_retriever.retrieve(question)
+                for doc in image_docs:
+                    citation = doc.metadata.get("image_citation", "")
+                    doc.metadata["source"] = citation
+                context_docs.extend(image_docs)
+                if image_docs:
+                    routing_paths.append("image")
             except Exception:
                 pass
 
@@ -384,13 +441,15 @@ class TechStoreRAGAgent:
         # Step 5: No evidence at all → immediate no_answer
         # ------------------------------------------------------------------
         if not context_docs:
-            return GuardrailedAnswer(
+            result = GuardrailedAnswer(
                 answer=_NO_ANSWER_STRING,
                 decision="no_answer",
                 claim_support_rate=0.0,
                 contradiction_rate=0.0,
                 cited_sources=[],
             )
+            self._log_query(question, routing_paths, 0, result)
+            return result
 
         # ------------------------------------------------------------------
         # Step 6: Citation-binding writer
@@ -400,4 +459,27 @@ class TechStoreRAGAgent:
         # ------------------------------------------------------------------
         # Step 7: Claim verifier + decision gate
         # ------------------------------------------------------------------
-        return verify_answer(raw_answer, context_docs)
+        result = verify_answer(raw_answer, context_docs)
+        self._log_query(question, routing_paths, len(context_docs), result)
+        return result
+
+    def _log_query(
+        self,
+        question: str,
+        routing_paths: list[str],
+        num_context_docs: int,
+        result: "GuardrailedAnswer",
+    ) -> None:
+        """Emit a structured observability log entry for every answered query."""
+        log_entry = {
+            "question": question[:120],
+            "routing": routing_paths,
+            "num_context_docs": num_context_docs,
+            "decision": result.decision,
+            "claim_support_rate": round(result.claim_support_rate, 3),
+            "contradiction_rate": round(result.contradiction_rate, 3),
+            "cited_sources": result.cited_sources,
+        }
+        logger.info("[RAG] %s", log_entry)
+        print(f"[RAG] routing={routing_paths} docs={num_context_docs} "
+              f"decision={result.decision} support={result.claim_support_rate:.2f}")

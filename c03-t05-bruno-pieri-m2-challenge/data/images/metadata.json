@@ -1,0 +1,17 @@
+[
+  {
+    "filename": "laptop_pro_x1_overview.png",
+    "caption": "Laptop Pro X1 product overview showing aluminum chassis, backlit keyboard, USB-C and USB-A ports, HDMI output, and 15.6-inch FHD display. Specifications: 16GB RAM, 512GB SSD, Intel Core i7, dedicated GPU. Eligible for Premium Protection Plan.",
+    "tags": ["laptop", "laptop pro x1", "specs", "product", "overview", "ports", "display", "keyboard", "figure", "image", "diagram"]
+  },
+  {
+    "filename": "router_nx300_setup_diagram.png",
+    "caption": "Router NX300 network setup diagram showing WAN port connected to ISP modem, four LAN ports for wired devices, dual-band Wi-Fi antenna coverage (2.4 GHz and 5 GHz), and QR code for mobile setup app. Includes LED status indicators: Power, Internet, Wi-Fi 2.4G, Wi-Fi 5G.",
+    "tags": ["router", "router nx300", "network", "setup", "diagram", "wi-fi", "wifi", "ports", "wan", "lan", "image", "figure"]
+  },
+  {
+    "filename": "warranty_tiers_overview.png",
+    "caption": "TechStore Plus warranty tiers comparison slide showing three tiers: Basic (12 months, no accidental damage), Standard (24 months, limited accidental damage), Premium Protection Plan (36 months, full accidental and water damage coverage). Monthly prices: Basic $0, Standard $5, Premium $12. Applies to all laptop and router models.",
+    "tags": ["warranty", "warranty tiers", "premium protection plan", "standard warranty", "basic", "coverage", "accidental damage", "water damage", "price", "comparison", "image", "figure", "slide"]
+  }
+]

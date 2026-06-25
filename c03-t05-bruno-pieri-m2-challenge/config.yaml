@@ -1,0 +1,63 @@
+# TechStore Plus RAG — Stop 3 Configuration
+# All thresholds, allowlists, and fusion options are centralized here.
+
+guardrails:
+  # Minimum fraction of atomic claims that must be SUPPORTED for a clean answer.
+  # Below this, the decision gate emits "answer_with_disclaimer" (if no contradictions)
+  # or "extractive" (if contradictions exist).
+  support_rate_threshold: 0.85
+  # Require numbers in answers to appear verbatim in a cited source (or be derivable).
+  numeric_grounding_required: true
+  # Decision gate outcome labels
+  decisions:
+    - answer               # claim_support_rate >= 0.85, contradiction_rate == 0
+    - answer_with_disclaimer  # claim_support_rate < 0.85, contradiction_rate == 0
+    - extractive           # contradiction_rate > 0 → return verbatim best chunk
+    - no_answer            # claim_support_rate == 0 AND contradiction_rate == 0
+
+graph:
+  # Maximum number of BFS hops from each seed entity.
+  default_hops: 2
+  # Only edges with these relation labels are traversed during subgraph expansion.
+  # A narrow allowlist prevents noisy or low-confidence LLM-extracted triples from
+  # polluting multi-hop answers.
+  relation_allowlist:
+    - COVERED_BY      # product covered by a warranty tier or policy
+    - PART_OF         # component or accessory belonging to a product family
+    - AMENDS          # a policy document that supersedes or modifies another
+    - APPLIES_TO      # a policy or service term that applies to a product category
+    - REQUIRES        # a product or service that requires another product/service
+    - SUPERSEDED_BY   # an older policy document replaced by a newer one
+  # Maximum out-degree per node during traversal (prevents hub nodes from flooding results).
+  degree_cap: 20
+  # LLM model used for triple extraction
+  extraction_model: "gpt-4.1-mini"
+
+retrieval:
+  # MMR parameters (bi-encoder pre-filter)
+  mmr_k: 6              # number of documents returned by MMR
+  mmr_fetch_k: 20       # candidate pool before MMR diversity filtering
+  mmr_lambda_mult: 0.85 # relevance weight (0 = max diversity, 1 = max relevance)
+  # Cross-encoder re-ranking
+  rerank_top_n: 3       # top-N documents after cross-encoder scoring
+  rerank_model: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+  # Table retrieval
+  table_k: 3            # max rows returned by TableRetriever per query
+  # Image retrieval
+  image_k: 2            # max images returned by ImageRetriever per query
+
+fusion:
+  # Late fusion weights per modality (used for context assembly priority).
+  # Weights inform the order in which evidence is passed to the writer prompt;
+  # higher weight → earlier in the context window.
+  modality_weights:
+    text: 0.6
+    table: 0.3
+    image: 0.1
+
+# Citation tag formats (must match those checked in tests)
+citations:
+  vector_text: "{source_filename}"          # e.g. policy_return_policy.txt
+  graph: "[G:{subject}->{object}]"          # e.g. [G:Laptop Pro X1->Premium Protection Plan]
+  table: "[TB:{filename}:row{N}]"           # e.g. [TB:laptop_specs.csv:row0]
+  image: "[I:{filename}]"                   # e.g. [I:laptop_pro_x1_overview.png]
