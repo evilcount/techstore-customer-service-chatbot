@@ -35,6 +35,7 @@ WHY THESE THRESHOLDS?
 from __future__ import annotations
 
 import json
+import re
 
 from langchain_core.documents import Document
 from langchain_core.messages import HumanMessage
@@ -57,6 +58,31 @@ Tuning guide:
 _LLM_MODEL: str = "gpt-4.1-mini"
 
 _NO_ANSWER_STRING: str = "I don't have that information in our documentation."
+_CITATION_PATTERN = re.compile(r"\[[^\]]+\]")
+_NUMBER_PATTERN = re.compile(r"\b\d+(?:\.\d+)?\b")
+
+
+def citation_density(answer: str) -> float:
+    """Return the fraction of sentences that contain at least one bracket citation."""
+    sentences = [
+        sentence.strip()
+        for sentence in re.split(r"(?<=[.!?])\s+", answer.strip())
+        if sentence.strip()
+    ]
+    if not sentences:
+        return 0.0
+    cited = sum(1 for sentence in sentences if _CITATION_PATTERN.search(sentence))
+    return cited / len(sentences)
+
+
+def numeric_grounding_rate(answer: str, context_text: str) -> float:
+    """Return the fraction of numbers in the answer that also appear in context."""
+    answer_numbers = _NUMBER_PATTERN.findall(answer)
+    if not answer_numbers:
+        return 1.0
+    context_numbers = set(_NUMBER_PATTERN.findall(context_text))
+    grounded = sum(1 for number in answer_numbers if number in context_numbers)
+    return grounded / len(answer_numbers)
 
 
 def verify_answer(
