@@ -487,6 +487,16 @@ class TechStoreRAGAgent:
             "contradiction_rate": round(result.contradiction_rate, 3),
             "cited_sources": result.cited_sources,
         }
+        from src.guardrails.verifier import citation_density, numeric_grounding_rate
+
+        density = citation_density(result.answer)
+        grounding = numeric_grounding_rate(result.answer, " ".join(result.cited_sources))
+        log_entry["citation_density"] = round(density, 3)
+        log_entry["numeric_grounding_rate"] = round(grounding, 3)
+
         logger.info("[RAG] %s", log_entry)
-        print(f"[RAG] routing={routing_paths} docs={num_context_docs} "
-              f"decision={result.decision} support={result.claim_support_rate:.2f}")
+        print(
+            f"[RAG] routing={routing_paths} docs={num_context_docs} "
+            f"decision={result.decision} support={result.claim_support_rate:.2f} "
+            f"citations={density:.2f}"
+        )
