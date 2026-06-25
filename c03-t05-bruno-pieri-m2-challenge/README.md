@@ -14,6 +14,8 @@ support articles, and policy documents. You build it progressively over three we
 
 Only Stop 3 is graded. Rubric: Functionality 40 | Code Quality 25 | Comprehension 20 | Docs 15.
 
+> Scope note: the Week 6 lesson PDF references an Odyssey corpus, but this M2 repository and its mandatory tests are TechStore Plus-oriented. Stop 3 therefore implements the same production RAG concepts (Graph RAG, guardrails, multimodal retrieval, and observability) over the TechStore Plus product, policy, table, and image corpus.
+
 ---
 
 ## Project structure
@@ -52,7 +54,8 @@ capstone/
 │   │   ├── writer.py                   (Stop 3)
 │   │   └── verifier.py                 (Stop 3)
 │   └── multimodal/
-│       └── table_retriever.py          (Stop 3)
+│       ├── table_retriever.py          (Stop 3)
+│       └── image_retriever.py          (Stop 3)
 └── tests/
     └── test_mandatory_cases.py
 ```
