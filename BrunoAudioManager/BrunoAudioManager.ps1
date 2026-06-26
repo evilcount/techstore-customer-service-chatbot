@@ -48,7 +48,16 @@ if ($SelfTest) {
         throw 'APO structure self-test failed because the test APO root was not detected.'
     }
 
-    Set-ActiveProfile -ProfilesRoot $paths.ProfilesRoot -ActiveProfilePath $paths.ActiveProfilePath -Device 'HD599' -ProfileName 'Music' | Out-Null
+    $selfTestPreset = Join-Path $paths.ProfilesRoot 'HD599\HD599 - Music.txt'
+    if (-not (Test-Path -LiteralPath (Split-Path -Parent $selfTestPreset))) {
+        New-Item -ItemType Directory -Path (Split-Path -Parent $selfTestPreset) -Force | Out-Null
+    }
+    @(
+        'Preamp: -6 dB'
+        'Filter: ON PK Fc 1000 Hz Gain 3 dB Q 1'
+    ) | Set-Content -LiteralPath $selfTestPreset -Encoding UTF8
+
+    Set-ActiveProfile -ProfilesRoot $paths.ProfilesRoot -ActiveProfilePath $paths.ActiveProfilePath -ConfigPath $paths.ApoConfigPath -Device 'HD599' -ProfileName 'Music' | Out-Null
     $activeProfile = Get-ActiveProfile -ActiveProfilePath $paths.ActiveProfilePath
     if ($activeProfile.DisplayName -ne 'HD599 / Music') {
         throw 'Active profile self-test failed.'

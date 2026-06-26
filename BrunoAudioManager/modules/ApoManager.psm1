@@ -57,7 +57,7 @@ function Initialize-ApoStructure {
     Ensure-ProfileLibrary -ProfilesRoot $Paths.ProfilesRoot -ProfileCatalog $ProfileCatalog
 
     if (-not (Test-Path -LiteralPath $Paths.ActiveProfilePath)) {
-        Set-ActiveProfile -ProfilesRoot $Paths.ProfilesRoot -ActiveProfilePath $Paths.ActiveProfilePath -Device 'HD599' -ProfileName 'Reference' | Out-Null
+        'Include: HD599\HD599 - Reference.txt' | Set-Content -LiteralPath $Paths.ActiveProfilePath -Encoding UTF8
     }
 
     if (-not (Test-Path -LiteralPath $Paths.ApoConfigPath)) {

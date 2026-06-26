@@ -34,14 +34,15 @@ function Show-BrunoAudioManagerForm {
     $infoBox = New-Object System.Windows.Forms.GroupBox
     $infoBox.Text = 'Informacoes'
     $infoBox.Location = New-Object System.Drawing.Point(20, 60)
-    $infoBox.Size = New-Object System.Drawing.Size(800, 110)
+    $infoBox.Size = New-Object System.Drawing.Size(800, 135)
     $form.Controls.Add($infoBox)
 
     $active = Get-ActiveProfile -ActiveProfilePath $Paths.ActiveProfilePath
+
     $infoLabel = New-Object System.Windows.Forms.Label
     $infoLabel.AutoSize = $true
     $infoLabel.Location = New-Object System.Drawing.Point(15, 25)
-    $infoLabel.Text = "Equalizer APO detectado: $($ApoStatus.EqualizerApoDetected)`r`nPeace detectado: $($ApoStatus.PeaceDetected)`r`nPerfil ativo: $($active.DisplayName)`r`nDispositivo selecionado: $($active.Device)"
+    $infoLabel.Text = "Equalizer APO detectado: $($ApoStatus.EqualizerApoDetected)`r`nPeace detectado: $($ApoStatus.PeaceDetected)`r`nPerfil ativo: $($active.DisplayName)`r`nDispositivo selecionado: $($active.Device)`r`nIncludeLine: $($active.IncludeLine)`r`nConfig: $($Paths.ApoConfigPath)"
     $infoBox.Controls.Add($infoLabel)
 
     $statusLabel = New-Object System.Windows.Forms.Label
@@ -52,48 +53,71 @@ function Show-BrunoAudioManagerForm {
 
     $libraryBox = New-Object System.Windows.Forms.GroupBox
     $libraryBox.Text = 'Biblioteca de Perfis'
-    $libraryBox.Location = New-Object System.Drawing.Point(20, 185)
+    $libraryBox.Location = New-Object System.Drawing.Point(20, 210)
     $libraryBox.Size = New-Object System.Drawing.Size(520, 350)
     $form.Controls.Add($libraryBox)
 
     $x = 20
+
     foreach ($device in $ProfileCatalog.Keys) {
+        $currentDevice = [string]$device
+
         $deviceLabel = New-Object System.Windows.Forms.Label
-        $deviceLabel.Text = $device
+        $deviceLabel.Text = $currentDevice
         $deviceLabel.Font = New-Object System.Drawing.Font('Segoe UI', 10, [System.Drawing.FontStyle]::Bold)
         $deviceLabel.AutoSize = $true
         $deviceLabel.Location = New-Object System.Drawing.Point($x, 28)
         $libraryBox.Controls.Add($deviceLabel)
 
         $y = 58
+
         foreach ($profile in $ProfileCatalog[$device]) {
+            $currentProfile = [string]$profile
+
             $button = New-Object System.Windows.Forms.Button
-            $button.Text = $profile
+            $button.Text = $currentProfile
             $button.Size = New-Object System.Drawing.Size(220, 34)
             $button.Location = New-Object System.Drawing.Point($x, $y)
             $button.Enabled = [bool]$ApoStatus.EqualizerApoDetected
-            $button.Tag = [pscustomobject]@{ Device = $device; Profile = $profile }
+
+            $button.Tag = [pscustomobject]@{
+                Device      = $currentDevice
+                ProfileName = $currentProfile
+            }
+
             $button.Add_Click({
                 param($sender, $eventArgs)
 
                 $selection = $sender.Tag
+
                 try {
                     $old = Get-ActiveProfile -ActiveProfilePath $Paths.ActiveProfilePath
-                    $new = Set-ActiveProfile -ProfilesRoot $Paths.ProfilesRoot -ActiveProfilePath $Paths.ActiveProfilePath -Device $selection.Device -ProfileName $selection.Profile
-                    Write-ProfileChangeLog -AudioLogPath $Paths.AudioLogPath -OldProfile $old.DisplayName -NewProfile $new.DisplayName
+
+                    $new = Set-ActiveProfile `
+                        -ProfilesRoot $Paths.ProfilesRoot `
+                        -ActiveProfilePath $Paths.ActiveProfilePath `
+                        -ConfigPath $Paths.ApoConfigPath `
+                        -Device $selection.Device `
+                        -ProfileName $selection.ProfileName
+
+                    Write-ProfileChangeLog `
+                        -AudioLogPath $Paths.AudioLogPath `
+                        -OldProfile $old.DisplayName `
+                        -NewProfile $new.DisplayName
 
                     $Preferences.selectedDevice = $selection.Device
-                    $Preferences.selectedProfile = $selection.Profile
+                    $Preferences.selectedProfile = $selection.ProfileName
                     Save-Preferences -PreferencesPath $Paths.PreferencesPath -Preferences $Preferences
 
-                    $infoLabel.Text = "Equalizer APO detectado: $($ApoStatus.EqualizerApoDetected)`r`nPeace detectado: $($ApoStatus.PeaceDetected)`r`nPerfil ativo: $($new.DisplayName)`r`nDispositivo selecionado: $($new.Device)"
-                    $statusLabel.Text = "Perfil aplicado: $($new.DisplayName)"
+                    $infoLabel.Text = "Equalizer APO detectado: $($ApoStatus.EqualizerApoDetected)`r`nPeace detectado: $($ApoStatus.PeaceDetected)`r`nPerfil ativo: $($new.DisplayName)`r`nDispositivo selecionado: $($new.Device)`r`nIncludeLine: $($new.IncludeLine)`r`nPreset aplicado: $($new.PresetPath)`r`nConfig: $($new.ConfigPath)"
+                    $statusLabel.Text = if ($new.HasAudibleContent) { "Perfil aplicado: $($new.DisplayName)" } else { $new.WarningMessage }
                 }
                 catch {
                     [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Bruno Audio Manager', 'OK', 'Error') | Out-Null
                     $statusLabel.Text = 'Erro ao aplicar perfil.'
                 }
-            })
+            }.GetNewClosure())
+
             $libraryBox.Controls.Add($button)
             $y += 40
         }
@@ -103,7 +127,7 @@ function Show-BrunoAudioManagerForm {
 
     $toolsBox = New-Object System.Windows.Forms.GroupBox
     $toolsBox.Text = 'Ferramentas'
-    $toolsBox.Location = New-Object System.Drawing.Point(560, 185)
+    $toolsBox.Location = New-Object System.Drawing.Point(560, 210)
     $toolsBox.Size = New-Object System.Drawing.Size(260, 215)
     $form.Controls.Add($toolsBox)
 
@@ -116,16 +140,19 @@ function Show-BrunoAudioManagerForm {
     )
 
     $toolY = 25
+
     foreach ($tool in $toolButtons) {
         $button = New-Object System.Windows.Forms.Button
         $button.Text = $tool.Text
         $button.Size = New-Object System.Drawing.Size(220, 30)
         $button.Location = New-Object System.Drawing.Point(18, $toolY)
         $button.Tag = $tool
+
         $button.Add_Click({
             param($sender, $eventArgs)
 
             $toolInfo = $sender.Tag
+
             try {
                 Open-ExistingPath -Path $toolInfo.Path -FriendlyName $toolInfo.Name
                 $statusLabel.Text = "Aberto: $($toolInfo.Name)"
@@ -134,14 +161,15 @@ function Show-BrunoAudioManagerForm {
                 [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Bruno Audio Manager', 'OK', 'Information') | Out-Null
                 $statusLabel.Text = "$($toolInfo.Name) indisponivel."
             }
-        })
+        }.GetNewClosure())
+
         $toolsBox.Controls.Add($button)
         $toolY += 35
     }
 
     $backupBox = New-Object System.Windows.Forms.GroupBox
     $backupBox.Text = 'Backup'
-    $backupBox.Location = New-Object System.Drawing.Point(560, 420)
+    $backupBox.Location = New-Object System.Drawing.Point(560, 445)
     $backupBox.Size = New-Object System.Drawing.Size(260, 115)
     $form.Controls.Add($backupBox)
 
@@ -150,10 +178,12 @@ function Show-BrunoAudioManagerForm {
     $exportButton.Size = New-Object System.Drawing.Size(220, 30)
     $exportButton.Location = New-Object System.Drawing.Point(18, 28)
     $exportButton.Enabled = [bool]$ApoStatus.EqualizerApoDetected
+
     $exportButton.Add_Click({
         $dialog = New-Object System.Windows.Forms.SaveFileDialog
         $dialog.Filter = 'ZIP files (*.zip)|*.zip'
         $dialog.FileName = 'BrunoAudioManager-Profiles.zip'
+
         if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
             try {
                 Export-ProfilesBackup -ProfilesRoot $Paths.ProfilesRoot -DestinationZip $dialog.FileName | Out-Null
@@ -163,9 +193,11 @@ function Show-BrunoAudioManagerForm {
             }
             catch {
                 [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Bruno Audio Manager', 'OK', 'Error') | Out-Null
+                $statusLabel.Text = 'Erro ao exportar profiles.'
             }
         }
-    })
+    }.GetNewClosure())
+
     $backupBox.Controls.Add($exportButton)
 
     $importButton = New-Object System.Windows.Forms.Button
@@ -173,25 +205,30 @@ function Show-BrunoAudioManagerForm {
     $importButton.Size = New-Object System.Drawing.Size(220, 30)
     $importButton.Location = New-Object System.Drawing.Point(18, 65)
     $importButton.Enabled = [bool]$ApoStatus.EqualizerApoDetected
+
     $importButton.Add_Click({
         $dialog = New-Object System.Windows.Forms.OpenFileDialog
         $dialog.Filter = 'ZIP files (*.zip)|*.zip'
+
         if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
             try {
                 Import-ProfilesBackup -ProfilesRoot $Paths.ProfilesRoot -SourceZip $dialog.FileName
+
                 $activeAfterImport = Get-ActiveProfile -ActiveProfilePath $Paths.ActiveProfilePath
-                $infoLabel.Text = "Equalizer APO detectado: $($ApoStatus.EqualizerApoDetected)`r`nPeace detectado: $($ApoStatus.PeaceDetected)`r`nPerfil ativo: $($activeAfterImport.DisplayName)`r`nDispositivo selecionado: $($activeAfterImport.Device)"
+
+                $infoLabel.Text = "Equalizer APO detectado: $($ApoStatus.EqualizerApoDetected)`r`nPeace detectado: $($ApoStatus.PeaceDetected)`r`nPerfil ativo: $($activeAfterImport.DisplayName)`r`nDispositivo selecionado: $($activeAfterImport.Device)`r`nIncludeLine: $($activeAfterImport.IncludeLine)`r`nConfig: $($Paths.ApoConfigPath)"
                 $statusLabel.Text = 'Profiles importados com sucesso.'
             }
             catch {
                 [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Bruno Audio Manager', 'OK', 'Error') | Out-Null
+                $statusLabel.Text = 'Erro ao importar profiles.'
             }
         }
-    })
+    }.GetNewClosure())
+
     $backupBox.Controls.Add($importButton)
 
     [void]$form.ShowDialog()
 }
 
 Export-ModuleMember -Function Show-BrunoAudioManagerForm
-

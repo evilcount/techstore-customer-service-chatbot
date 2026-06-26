@@ -51,10 +51,6 @@ function Ensure-ProfileLibrary {
         if (-not (Test-Path -LiteralPath $devicePath)) {
             New-Item -ItemType Directory -Path $devicePath -Force | Out-Null
         }
-
-        foreach ($profile in $ProfileCatalog[$device]) {
-            Ensure-PresetFile -ProfilesRoot $ProfilesRoot -Device $device -ProfileName $profile | Out-Null
-        }
     }
 }
 
@@ -130,8 +126,7 @@ function Get-ActiveProfile {
 
     $profileName = [System.IO.Path]::GetFileNameWithoutExtension($fileName)
 
-    # Remove o prefixo do dispositivo do nome do perfil.
-    # Exemplo: "HD599 - Rock & Metal" vira "Rock & Metal"
+    # Remove the device prefix from file names like "HD599 - Rock & Metal".
     if ($profileName -like "$device - *") {
         $profileName = $profileName.Substring($device.Length + 3)
     }
@@ -144,6 +139,47 @@ function Get-ActiveProfile {
     }
 }
 
+function Test-PresetHasAudibleContent {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$PresetContent
+    )
+
+    $activeLines = $PresetContent -split "`r?`n" | Where-Object {
+        $line = $_.Trim()
+        -not [string]::IsNullOrWhiteSpace($line) -and
+        -not $line.StartsWith('#')
+    }
+
+    return [bool]($activeLines | Select-Object -First 1)
+}
+
+function New-ManagedConfigContent {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Device,
+
+        [Parameter(Mandatory)]
+        [string]$ProfileName,
+
+        [Parameter(Mandatory)]
+        [string]$RelativePath,
+
+        [Parameter(Mandatory)]
+        [string]$PresetContent
+    )
+
+    @"
+# Bruno Audio Manager
+# Active profile: $Device / $ProfileName
+# Source: Profiles\$RelativePath
+
+$PresetContent
+"@
+}
+
 function Set-ActiveProfile {
     [CmdletBinding()]
     param(
@@ -154,27 +190,55 @@ function Set-ActiveProfile {
         [string]$ActiveProfilePath,
 
         [Parameter(Mandatory)]
+        [string]$ConfigPath,
+
+        [Parameter(Mandatory)]
         [string]$Device,
 
         [Parameter(Mandatory)]
         [string]$ProfileName
     )
 
-    $presetPath = Ensure-PresetFile -ProfilesRoot $ProfilesRoot -Device $Device -ProfileName $ProfileName
     $relativePath = Get-PresetRelativePath -Device $Device -ProfileName $ProfileName
+    $presetPath = Join-Path $ProfilesRoot $relativePath
 
     if (-not (Test-Path -LiteralPath $presetPath)) {
         throw "Preset file not found: $presetPath"
     }
 
+    $presetContent = Get-Content -LiteralPath $presetPath -Raw
+    $hasAudibleContent = Test-PresetHasAudibleContent -PresetContent $presetContent
+    $warningMessage = if ($hasAudibleContent) { '' } else { 'Este preset não contém filtros ativos; o perfil pode não ter efeito audível.' }
+
+    $activeFolder = Split-Path -Parent $ActiveProfilePath
+    if (-not (Test-Path -LiteralPath $activeFolder)) {
+        New-Item -ItemType Directory -Path $activeFolder -Force | Out-Null
+    }
+
+    # Active.txt remains a readable record of the selected preset.
     "Include: $relativePath" | Set-Content -LiteralPath $ActiveProfilePath -Encoding UTF8
 
+    $managedConfig = New-ManagedConfigContent -Device $Device -ProfileName $ProfileName -RelativePath $relativePath -PresetContent $presetContent
+    try {
+        Set-Content -LiteralPath $ConfigPath -Value $managedConfig -Encoding UTF8
+    }
+    catch [System.UnauthorizedAccessException] {
+        throw "Não foi possível escrever no config.txt. Execute o Bruno Audio Manager como administrador. Caminho: $ConfigPath"
+    }
+    catch {
+        throw "Não foi possível escrever no config.txt. Execute o Bruno Audio Manager como administrador se o arquivo estiver em Program Files. Detalhes: $($_.Exception.Message)"
+    }
+
     [pscustomobject]@{
-        Device      = $Device
-        ProfileName = $ProfileName
-        DisplayName = "$Device / $ProfileName"
-        IncludeLine = "Include: $relativePath"
+        Device            = $Device
+        ProfileName       = $ProfileName
+        DisplayName       = "$Device / $ProfileName"
+        IncludeLine       = "Include: $relativePath"
+        PresetPath        = $presetPath
+        ConfigPath        = $ConfigPath
+        HasAudibleContent = $hasAudibleContent
+        WarningMessage    = $warningMessage
     }
 }
 
-Export-ModuleMember -Function ConvertTo-PresetFileName, Get-PresetRelativePath, Ensure-ProfileLibrary, Ensure-PresetFile, Get-ActiveProfile, Set-ActiveProfile
+Export-ModuleMember -Function ConvertTo-PresetFileName, Get-PresetRelativePath, Ensure-ProfileLibrary, Ensure-PresetFile, Get-ActiveProfile, Test-PresetHasAudibleContent, New-ManagedConfigContent, Set-ActiveProfile
