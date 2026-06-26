@@ -17,6 +17,21 @@ From inside the `BrunoAudioManager/` directory:
 pwsh -NoProfile -ExecutionPolicy Bypass -File .\BrunoAudioManager.ps1
 ```
 
+## Build Windows Launcher
+
+From the repository root:
+
+```powershell
+pwsh -NoProfile -File .\BrunoAudioManager\tools\Build-Exe.ps1
+```
+
+The executable is generated at:
+
+```text
+BrunoAudioManager\dist\BrunoAudioManager.exe
+```
+
+The launcher requests administrator permissions and starts the PowerShell app without an interactive prompt window.
 ## Self-Test
 
 From inside the `BrunoAudioManager/` directory:

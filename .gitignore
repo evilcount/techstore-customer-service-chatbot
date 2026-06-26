@@ -27,3 +27,6 @@ Thumbs.db
 
 # Generated vector stores
 chroma_db/
+
+# Bruno Audio Manager generated binaries
+BrunoAudioManager/dist/
