@@ -68,5 +68,17 @@ if ($SelfTest) {
     exit 0
 }
 
-$apoStatus = Initialize-ApoStructure -Paths $paths -ProfileCatalog $profileCatalog -ManagedConfigLines (Get-ManagedConfigLines)
+try {
+    $apoStatus = Initialize-ApoStructure -Paths $paths -ProfileCatalog $profileCatalog -ManagedConfigLines (Get-ManagedConfigLines)
+}
+catch {
+    $apoStatus = [pscustomobject]@{
+        EqualizerApoDetected = $false
+        PeaceDetected        = $false
+        ConfigEditorDetected = $false
+        Message              = "Unable to prepare Equalizer APO: $($_.Exception.Message)"
+    }
+}
+
 Show-BrunoAudioManagerForm -Paths $paths -AppInfo $appInfo -ProfileCatalog $profileCatalog -ApoStatus $apoStatus -Preferences $preferences
+
