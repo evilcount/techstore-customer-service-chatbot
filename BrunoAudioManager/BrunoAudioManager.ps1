@@ -21,6 +21,8 @@ Import-Module (Join-Path $ModuleRoot 'SettingsManager.psm1') -Force -DisableName
 Import-Module (Join-Path $ModuleRoot 'LogManager.psm1') -Force -DisableNameChecking
 Import-Module (Join-Path $ModuleRoot 'ProfileManager.psm1') -Force -DisableNameChecking
 Import-Module (Join-Path $ModuleRoot 'ApoManager.psm1') -Force -DisableNameChecking
+Import-Module (Join-Path $ModuleRoot 'BackupManager.psm1') -Force -DisableNameChecking
+Import-Module (Join-Path $ModuleRoot 'ToolLauncher.psm1') -Force -DisableNameChecking
 
 if ($SelfTest) {
     $appInfo = Get-AppInfo
@@ -51,11 +53,18 @@ if ($SelfTest) {
         throw 'Active profile self-test failed.'
     }
 
+    $backupPath = Join-Path ([System.IO.Path]::GetTempPath()) 'BrunoAudioManager-ProfilesBackup.zip'
+    Export-ProfilesBackup -ProfilesRoot $paths.ProfilesRoot -DestinationZip $backupPath | Out-Null
+    Import-ProfilesBackup -ProfilesRoot $paths.ProfilesRoot -SourceZip $backupPath
+    if (-not (Test-Path -LiteralPath $backupPath)) {
+        throw 'Backup export self-test failed.'
+    }
+
     Write-Host "$($appInfo.Name) $($appInfo.Version) self-test bootstrap OK"
     Write-Host 'Paths, settings, and logging self-test OK'
     Write-Host 'APO and profile management self-test OK'
+    Write-Host 'Backup management self-test OK'
     exit 0
 }
 
 Write-Host 'Bruno Audio Manager bootstrap is ready. Additional modules will be loaded in later tasks.'
-
