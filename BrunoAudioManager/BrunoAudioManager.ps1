@@ -23,17 +23,18 @@ Import-Module (Join-Path $ModuleRoot 'ProfileManager.psm1') -Force -DisableNameC
 Import-Module (Join-Path $ModuleRoot 'ApoManager.psm1') -Force -DisableNameChecking
 Import-Module (Join-Path $ModuleRoot 'BackupManager.psm1') -Force -DisableNameChecking
 Import-Module (Join-Path $ModuleRoot 'ToolLauncher.psm1') -Force -DisableNameChecking
+Import-Module (Join-Path $ModuleRoot 'MainForm.psm1') -Force -DisableNameChecking
+
+$appInfo = Get-AppInfo
+$paths = Get-AppPaths -ProjectRoot $ProjectRoot -ApoConfigRoot $ApoConfigRoot
+$defaultPreferences = Get-DefaultPreferences
+$profileCatalog = Get-ProfileCatalog
+
+Initialize-Settings -SettingsRoot $paths.SettingsRoot -PreferencesPath $paths.PreferencesPath -DefaultPreferences $defaultPreferences
+Initialize-Log -LogsRoot $paths.LogsRoot
+$preferences = Get-Preferences -PreferencesPath $paths.PreferencesPath -DefaultPreferences $defaultPreferences
 
 if ($SelfTest) {
-    $appInfo = Get-AppInfo
-    $paths = Get-AppPaths -ProjectRoot $ProjectRoot -ApoConfigRoot $ApoConfigRoot
-    $defaultPreferences = Get-DefaultPreferences
-    $profileCatalog = Get-ProfileCatalog
-
-    Initialize-Settings -SettingsRoot $paths.SettingsRoot -PreferencesPath $paths.PreferencesPath -DefaultPreferences $defaultPreferences
-    Initialize-Log -LogsRoot $paths.LogsRoot
-    $preferences = Get-Preferences -PreferencesPath $paths.PreferencesPath -DefaultPreferences $defaultPreferences
-
     if ($preferences.selectedDevice -ne 'HD599') {
         throw 'Default preferences self-test failed.'
     }
@@ -67,4 +68,5 @@ if ($SelfTest) {
     exit 0
 }
 
-Write-Host 'Bruno Audio Manager bootstrap is ready. Additional modules will be loaded in later tasks.'
+$apoStatus = Initialize-ApoStructure -Paths $paths -ProfileCatalog $profileCatalog -ManagedConfigLines (Get-ManagedConfigLines)
+Show-BrunoAudioManagerForm -Paths $paths -AppInfo $appInfo -ProfileCatalog $profileCatalog -ApoStatus $apoStatus -Preferences $preferences
