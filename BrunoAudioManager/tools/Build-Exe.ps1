@@ -33,6 +33,12 @@ if (-not (Test-Path -LiteralPath $publishRoot)) {
     /out:$exeTarget `
     $sourcePath
 
+$modulesSource = Join-Path $projectRoot 'modules'
+$modulesTarget = Join-Path $publishRoot 'modules'
+if (Test-Path -LiteralPath $modulesTarget) {
+    Remove-Item -LiteralPath $modulesTarget -Recurse -Force
+}
+Copy-Item -LiteralPath $modulesSource -Destination $modulesTarget -Recurse -Force
 Copy-Item -LiteralPath $scriptSource -Destination $scriptTarget -Force
 
 Write-Host "Executable generated: $exeTarget"

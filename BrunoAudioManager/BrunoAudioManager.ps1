@@ -89,5 +89,10 @@ catch {
     }
 }
 
+$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+if ($apoStatus.EqualizerApoDetected -and -not $isAdmin) {
+    $apoStatus.Message = "AVISO: Execute como administrador para aplicar perfis. $($apoStatus.Message)"
+}
+
 Show-BrunoAudioManagerForm -Paths $paths -AppInfo $appInfo -ProfileCatalog $profileCatalog -ApoStatus $apoStatus -Preferences $preferences
 

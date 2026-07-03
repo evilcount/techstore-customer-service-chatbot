@@ -115,6 +115,7 @@ function Show-BrunoAudioManagerForm {
                 catch {
                     [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Bruno Audio Manager', 'OK', 'Error') | Out-Null
                     $statusLabel.Text = 'Erro ao aplicar perfil.'
+                    Write-ErrorLog -AudioLogPath $Paths.AudioLogPath -Context "Set-ActiveProfile $($selection.Device)/$($selection.ProfileName)" -ErrorMessage $_.Exception.Message
                 }
             }.GetNewClosure())
 
@@ -132,11 +133,11 @@ function Show-BrunoAudioManagerForm {
     $form.Controls.Add($toolsBox)
 
     $toolButtons = @(
-        @{ Text = 'Abrir Peace'; Path = $Paths.PeaceExePath; Name = 'Peace' },
-        @{ Text = 'Abrir Configuration Editor'; Path = $Paths.ConfigEditorExePath; Name = 'Configuration Editor' },
-        @{ Text = 'Abrir pasta Profiles'; Path = $Paths.ProfilesRoot; Name = 'Profiles folder' },
-        @{ Text = 'Abrir pasta do projeto'; Path = $Paths.ProjectRoot; Name = 'Project folder' },
-        @{ Text = 'Abrir documentacao'; Path = $Paths.UserGuidePath; Name = 'Documentation' }
+        @{ Text = 'Abrir Peace'; Path = $Paths.PeaceExePath; Name = 'Peace'; Enabled = [bool]$ApoStatus.PeaceDetected },
+        @{ Text = 'Abrir Configuration Editor'; Path = $Paths.ConfigEditorExePath; Name = 'Configuration Editor'; Enabled = [bool]$ApoStatus.ConfigEditorDetected },
+        @{ Text = 'Abrir pasta Profiles'; Path = $Paths.ProfilesRoot; Name = 'Profiles folder'; Enabled = $true },
+        @{ Text = 'Abrir pasta do projeto'; Path = $Paths.ProjectRoot; Name = 'Project folder'; Enabled = $true },
+        @{ Text = 'Abrir documentacao'; Path = $Paths.UserGuidePath; Name = 'Documentation'; Enabled = $true }
     )
 
     $toolY = 25
@@ -147,6 +148,7 @@ function Show-BrunoAudioManagerForm {
         $button.Size = New-Object System.Drawing.Size(220, 30)
         $button.Location = New-Object System.Drawing.Point(18, $toolY)
         $button.Tag = $tool
+        $button.Enabled = $tool.Enabled
 
         $button.Add_Click({
             param($sender, $eventArgs)
@@ -194,6 +196,7 @@ function Show-BrunoAudioManagerForm {
             catch {
                 [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Bruno Audio Manager', 'OK', 'Error') | Out-Null
                 $statusLabel.Text = 'Erro ao exportar profiles.'
+                Write-ErrorLog -AudioLogPath $Paths.AudioLogPath -Context 'Export-ProfilesBackup' -ErrorMessage $_.Exception.Message
             }
         }
     }.GetNewClosure())
@@ -211,6 +214,14 @@ function Show-BrunoAudioManagerForm {
         $dialog.Filter = 'ZIP files (*.zip)|*.zip'
 
         if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
+            $confirm = [System.Windows.Forms.MessageBox]::Show(
+                'Importar irá sobrescrever os perfis existentes. Deseja continuar?',
+                'Confirmar Importação',
+                [System.Windows.Forms.MessageBoxButtons]::YesNo,
+                [System.Windows.Forms.MessageBoxIcon]::Warning
+            )
+            if ($confirm -ne [System.Windows.Forms.DialogResult]::Yes) { return }
+
             try {
                 Import-ProfilesBackup -ProfilesRoot $Paths.ProfilesRoot -SourceZip $dialog.FileName
 
@@ -222,6 +233,7 @@ function Show-BrunoAudioManagerForm {
             catch {
                 [System.Windows.Forms.MessageBox]::Show($_.Exception.Message, 'Bruno Audio Manager', 'OK', 'Error') | Out-Null
                 $statusLabel.Text = 'Erro ao importar profiles.'
+                Write-ErrorLog -AudioLogPath $Paths.AudioLogPath -Context 'Import-ProfilesBackup' -ErrorMessage $_.Exception.Message
             }
         }
     }.GetNewClosure())

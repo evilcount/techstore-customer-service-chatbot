@@ -30,3 +30,4 @@ chroma_db/
 
 # Bruno Audio Manager generated binaries
 BrunoAudioManager/dist/
+BrunoAudioManager/logs/

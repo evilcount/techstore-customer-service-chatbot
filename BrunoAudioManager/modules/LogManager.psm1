@@ -31,4 +31,25 @@ function Write-ProfileChangeLog {
     Add-Content -LiteralPath $AudioLogPath -Value $line -Encoding UTF8
 }
 
-Export-ModuleMember -Function Initialize-Log, Write-ProfileChangeLog
+function Write-ErrorLog {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$AudioLogPath,
+        [Parameter(Mandatory)]
+        [string]$Context,
+        [Parameter(Mandatory)]
+        [string]$ErrorMessage
+    )
+
+    $folder = Split-Path -Parent $AudioLogPath
+    if (-not (Test-Path -LiteralPath $folder)) {
+        New-Item -ItemType Directory -Path $folder -Force | Out-Null
+    }
+
+    $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+    $line = "$timestamp | ERROR | $Context | $ErrorMessage"
+    Add-Content -LiteralPath $AudioLogPath -Value $line -Encoding UTF8
+}
+
+Export-ModuleMember -Function Initialize-Log, Write-ProfileChangeLog, Write-ErrorLog
