@@ -31,3 +31,15 @@ chroma_db/
 # Bruno Audio Manager generated binaries
 BrunoAudioManager/dist/
 BrunoAudioManager/logs/
+
+# Obsidian vault config (workspace state churns constantly)
+.obsidian/
+
+# Superpowers runtime state (logs/pids)
+.superpowers/
+
+# Local zip backups
+backups/
+
+# Claude Code per-machine settings
+.claude/settings.local.json
