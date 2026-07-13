@@ -252,6 +252,49 @@ The bonus evaluation includes macro Precision, Recall, F1 Score, and ROC curve p
 
 ---
 
+## Week 7 — LangGraph Challenge (`Week7_LangGraph_Challenge.ipynb`)
+
+Module 3's first challenge: replaces the Week 3 agent's `create_react_agent` prebuilt loop with a
+hand-rolled LangGraph `StateGraph` — typed state with reducers, a loop-cap guard, checkpointing, and
+streamed observability, all explicit and testable instead of hidden inside a prebuilt call.
+
+### Architecture
+
+```text
+Input: {"messages": [...], "tool_calls": 0, "retries": 0, "errors": []}
+  ↓
+START → agent
+  agent → (tools | safe_exit | END)   via route_after_agent (tools_condition + loop-cap check)
+  tools → agent                       (feed tool results back)
+  safe_exit → END                     (loop cap tripped)
+```
+
+### Key Components
+
+| Component | Description |
+|-----------|-------------|
+| `AgentState` | `TypedDict` — `messages` (`add_messages`), `tool_calls`/`retries` (`operator.add`), `errors` (`operator.add`) |
+| `add`, `multiply` | Loosely-typed tools (`str \| float \| int`) that never raise; return `"ERROR:<CLASS>: ..."` strings on bad input |
+| `route_after_agent` | Conditional edge combining `tools_condition` with the `MAX_TOOL_CALLS = 5` loop-cap check |
+| `safe_exit` | Node reached only when the loop cap trips; appends a friendly message + structured error |
+| `build_graph()` | Factory in `src/chains/langgraph_challenge_agent.py`; injectable `llm`/`checkpointer`/`interrupt_before` for testing |
+
+### Running
+
+```powershell
+jupyter notebook Week7_LangGraph_Challenge.ipynb
+```
+
+Offline unit tests (fake LLM double, no API calls): `pytest tests/test_langgraph_challenge_agent.py -v`
+
+### Note on the spec's worked example
+
+The challenge document's math-chain acceptance test claims `"Add 2.5 and 7, then multiply by 3."`
+returns `27.0`. That's arithmetically inconsistent — `(2.5 + 7) * 3 = 28.5`. The notebook and tests
+validate the correct value (`28.5`) instead.
+
+---
+
 ## Conversation Persistence
 
 Both weeks share the same output format:
@@ -278,9 +321,13 @@ Consolidated: `conversation_data/consolidated_conversations.json`
 
 ---
 
-## Week 3 (upcoming)
+## Week 3 — Memory & Tools Agent (`src/chains/memory_agent.py`)
 
 Extends the Week 2 LCEL chain with:
-- **HybridMemory** — capped message buffer + rolling summary for multi-turn conversations
-- **MemoryAgent** — tool-using agent with `@tool` decorators and `create_agent`
-- (Bonus) MCP server integration
+- **HybridMemory** (`src/components/hybrid_memory.py`) — capped message buffer + rolling summary for multi-turn conversations, one instance per customer email
+- **MemoryAgent** (`src/chains/memory_agent.py`) — tool-using agent built on `langgraph.prebuilt.create_react_agent`, wired to the six customer tools in `src/components/customer_tools.py`
+- **MCP server integration** — `src/mcp/notion_followup_server.py`
+
+`MemoryAgent` uses `create_react_agent` as its loop, not a custom `StateGraph` — see
+[Week 7](#week-7--langgraph-challenge-week7_langgraph_challengeipynb) for the hand-rolled `StateGraph`
+version.
